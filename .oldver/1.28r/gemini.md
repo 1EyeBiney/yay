@@ -95,25 +95,4 @@ The `index.html` file must contain exactly this structure for the core interface
   <div id="aria-announce" class="sr-only" aria-live="assertive"></div>
 </body>
 ```
- ### 9. The Web Audio Engine Specs
-The game requires `window.playGameSound(action)` to be implemented with the following oscillator specifications to provide non-verbal spatial orientation alongside ARIA announcements:
-- `startup`: Tri-tonal sequence `[400, 523, 659]` played immediately at 0ms delay.
-- `nav`: High-pitched blip (880Hz) for cursor movement.
-- `limit`: Low-pitched thud (220Hz) for boundary alerts.
-- `select`: Ascending chime `[660, 880]` for entering Score Mode.
-- `save`: C-Major chord `[523.25, 659.25, 783.99, 1046.50]` for committing a score.
-- `cancel`: Descending tone `[440, 220]` for Escaping/Resetting.
-*Note: Base volume (gain) must be explicitly set between 0.4 and 0.5 for all sounds. `initAudio()` must be called immediately on the first user gesture (the Start button) and at the top of the `keydown` listener.*
-
-### 10. Production Deployment
-- **Filenaming**: The primary application file must always be named `index.html` to support automatic root-level loading via GitHub Pages.
-
-### 11. HTML Boilerplate Update (Audio Initialization)
-Replace the previous HTML boilerplate with this exact structure to ensure the audio context can be unlocked via the Start button:
-```html
-<body>
-  <button id="initBtn" autofocus onclick="initGame()">Start Yahtzee</button>
-  <div id="game-container" tabindex="0" role="application" aria-label="Yahtzee Scorecard. Press Up and Down arrows to navigate.">
-  </div>
-  <div id="aria-announce" class="sr-only" aria-live="assertive"></div>
-</body>
+ 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>YAY! v1.2.8</title>
+    <title>YAY! v1.2.9.1</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -189,13 +189,13 @@
             if (saved) {
                 try {
                     window.YAHTZEE_STATE = JSON.parse(saved);
-                    window.announce("Yes! Accessible Yahtzee version 1.2.8. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.announce("Yes! Accessible Yahtzee version 1.2.9.1. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {
                     console.error("Save file corrupted", e);
-                    window.announce("Yes! Accessible Yahtzee version 1.2.8 initialized. Press Up or Down arrows to navigate.");
+                    window.announce("Yes! Accessible Yahtzee version 1.2.9.1 initialized. Press Up or Down arrows to navigate.");
                 }
             } else {
-                window.announce("Yes! Accessible Yahtzee version 1.2.8 initialized. Press Up or Down arrows to navigate.");
+                window.announce("Yes! Accessible Yahtzee version 1.2.9.1 initialized. Press Up or Down arrows to navigate.");
             }
             
             window.renderScorecard();
@@ -425,7 +425,7 @@
                     state.currentCategory = hotkeyMap[lowerKey];
                     window.renderScorecard();
                     const newCategory = state.categories[state.currentCategory];
-                    const scoreStatus = newCategory.value === null ? 'Empty' : `Score ${newCategory.value}`;
+                    const scoreStatus = newCategory.value === null ? 'Empty' : (newCategory.value === 0 ? 'Scratched' : `Score ${newCategory.value}`);
                     window.announce(`${newCategory.name}. ${scoreStatus}.`);
                     return;
                 }
@@ -478,7 +478,7 @@
                         window.announce(`${totalsMap[state.currentCategory].name}. ${totalsMap[state.currentCategory].value}.`);
                     } else {
                         const newCategory = state.categories[state.currentCategory];
-                        const scoreStatus = newCategory.value === null ? 'Empty' : `Score ${newCategory.value}`;
+                        const scoreStatus = newCategory.value === null ? 'Empty' : (newCategory.value === 0 ? 'Scratched' : `Score ${newCategory.value}`);
                         window.announce(`${newCategory.name}. ${scoreStatus}.`);
                     }
                 } else if (e.key === 'Enter') {
@@ -490,7 +490,8 @@
                     window.playGameSound('select');
                     state.inputMode = 'score';
                     state.tempScore = category.value === null ? 0 : category.value;
-                    window.announce(`Set score for ${category.name}. ${state.tempScore}.`);
+                    const scoreStr = state.tempScore === 0 ? "Scratch, 0" : state.tempScore;
+                    window.announce(`Set score for ${category.name}. ${scoreStr}.`);
                     window.renderScorecard();
                 }
             } else if (state.inputMode === 'score') {
@@ -506,7 +507,8 @@
                     state.inputMode = 'nav';
                     window.saveState(); // Save on commit
                     window.renderScorecard();
-                    window.announce(`${state.tempScore} points saved in ${category.name}.`);
+                    const saveMsg = state.tempScore === 0 ? `Scratched ${category.name}.` : `${state.tempScore} points saved in ${category.name}.`;
+                    window.announce(saveMsg);
                 } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                     if (category.fixed) {
                         const currentIndex = category.fixed.indexOf(state.tempScore);
@@ -525,7 +527,7 @@
                         if (state.tempScore > category.max) state.tempScore = category.max;
                         if (state.tempScore < 0) state.tempScore = 0;
                     }
-                    window.announce(state.tempScore);
+                    window.announce(state.tempScore === 0 ? "Scratch, 0" : state.tempScore);
                     window.renderScorecard();
                 }
             } else if (state.inputMode === 'confirm_reset') {
