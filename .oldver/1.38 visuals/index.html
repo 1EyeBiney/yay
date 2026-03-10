@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v1.3.8.1</title>
+        <title>YAY! v1.3.8</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -234,7 +234,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.3.8.1 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.3.8 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -257,7 +257,7 @@
                         window.YAHTZEE_STATE.heldDice = [false, false, false, false, false];
                         window.YAHTZEE_STATE.rollsLeft = 3;
                     }
-                    window.announce("Yes! Accessible Yahtzee version 1.3.8.1. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.announce("Yes! Accessible Yahtzee version 1.3.8. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {
                     console.warn("Cleared incompatible save file:", e.message);
                     localStorage.removeItem('YAHTZEE_DATA'); // Clear the bad data
@@ -489,7 +489,7 @@
                     return;
                 }
 
-                const holdKeys = ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB'];
+                const holdKeys = ['KeyZ', 'KeyX', 'KeyV', 'KeyB', 'KeyN'];
                 if (holdKeys.includes(e.code)) {
                     e.preventDefault();
                     const index = holdKeys.indexOf(e.code);
@@ -655,7 +655,7 @@
                 const lowerKey = e.key.toLowerCase();
                 const hotkeyMap = {
                     '1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
-                    't': 'T', 'f': 'F', 'h': 'H', 's': 'S', 'l': 'L', 'y': 'Y', 'a': 'C'
+                    't': 'T', 'f': 'F', 'h': 'H', 's': 'S', 'l': 'L', 'y': 'Y', 'c': 'C', 'a': '1'
                 };
 
                 // Yahtzee Bonus hotkey is only active if Yahtzee has been scored.
