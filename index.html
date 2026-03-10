@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>YAY! v1.3.4.1</title>
+        <title>YAY! v1.3.6.1</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -93,6 +93,7 @@
     <div id="aria-announce" class="sr-only" aria-live="assertive"></div>
 
     <script>
+        const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
         window.audioCtx = null;
         function initAudio() { 
             if(!window.audioCtx) { window.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
@@ -162,17 +163,12 @@
         }
 
         window.YAHTZEE_STATE = {
-          players: [
-            { id: 1, categories: getDefaultCategories() },
-            { id: 2, categories: getDefaultCategories() },
-            { id: 3, categories: getDefaultCategories() },
-            { id: 4, categories: getDefaultCategories() },
-            { id: 5, categories: getDefaultCategories() },
-            { id: 6, categories: getDefaultCategories() }
-          ],
+          players: [],
+          setupIndex: 0,
+          nameIndex: 0,
           currentPlayerIndex: 0,
           currentCategory: '1', // Tracks current cursor position
-          inputMode: 'nav',     // 'nav', 'score', or 'confirm_reset'
+          inputMode: 'setup',   // 'setup', 'nav', 'score', or 'confirm_reset'
           tempScore: 0,         // Tracks the number being dialed in 'score' mode
           lastMove: null,
           history: [],          // Array of last 5 game objects
@@ -203,21 +199,27 @@
                 try {
                     const parsed = JSON.parse(saved);
                     // Check if this is an old save file or has the wrong player count
-                    if (!parsed.players || !Array.isArray(parsed.players) || parsed.players.length !== 6) {
+                    // Ensure names exist for hydrated legacy saves
+                    if (parsed.players && Array.isArray(parsed.players)) {
+                        parsed.players.forEach((p, i) => { if (!p.name) p.name = `Player ${i + 1}`; });
+                    }
+                    if (!parsed.players || !Array.isArray(parsed.players) || parsed.players.length === 0) { 
                         throw new Error("Legacy save state detected.");
                     }
                     window.YAHTZEE_STATE = parsed;
-                    window.announce("Yes! Accessible Yahtzee version 1.3.4.1. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.announce("Yes! Accessible Yahtzee version 1.3.6.1. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {
                     console.warn("Cleared incompatible save file:", e.message);
                     localStorage.removeItem('YAHTZEE_DATA'); // Clear the bad data
-                    window.announce("Yes! Accessible Yahtzee version 1.3.4.1 initialized. Press Up or Down arrows to navigate.");
+                    window.YAHTZEE_STATE.inputMode = 'setup';
+                    window.announce("Yes! Accessible Yahtzee version 1.3.6 initialized. Select name for Player 1. Aces Adventurer (Default).");
                 }
             } else {
-                window.announce("Yes! Accessible Yahtzee version 1.3.4.1 initialized. Press Up or Down arrows to navigate.");
+                window.YAHTZEE_STATE.inputMode = 'setup';
+                window.announce("Yes! Accessible Yahtzee version 1.3.6.1 initialized. Select name for Player 1. Aces Adventurer (Default).");
             }
             
-            window.renderScorecard();
+            if (window.YAHTZEE_STATE.players.length > 0) window.renderScorecard();
         };
 
         window.renderScorecard = function() {
@@ -248,8 +250,8 @@
                         <tr>
                             <th>Category</th>
             `;
-            players.forEach((p, index) => {
-                tableHtml += `<th>Player ${index + 1}</th>`;
+            players.forEach((p) => {
+                tableHtml += `<th>${p.name}</th>`;
             });
             tableHtml += `
                         </tr>
@@ -308,6 +310,56 @@
             initAudio();
             const state = window.YAHTZEE_STATE;
             
+            if (state.inputMode === 'setup') {
+                e.preventDefault();
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    const step = e.shiftKey ? 5 : 1;
+                    if (e.key === 'ArrowUp') {
+                        state.nameIndex = (state.nameIndex + step) % NAME_LIBRARY.length;
+                    } else {
+                        state.nameIndex = (state.nameIndex - step + NAME_LIBRARY.length) % NAME_LIBRARY.length;
+                    }
+                    window.playGameSound('nav');
+                    let nameStr = NAME_LIBRARY[state.nameIndex];
+                    if (state.nameIndex === 0) nameStr += " (Default)";
+                    window.announce(`Player ${state.setupIndex + 1}, ${nameStr}`);
+                } else if (e.key === 'Enter') {
+                    const chosenName = NAME_LIBRARY[state.nameIndex];
+                    state.players.push({ id: state.setupIndex + 1, name: chosenName, categories: getDefaultCategories() });
+                    
+                    if (state.players.length === 6) {
+                        state.inputMode = 'nav';
+                        state.setupIndex = 0;
+                        window.playGameSound('save');
+                        window.saveState();
+                        window.renderScorecard();
+                        window.announce(`Setup complete. Game started with 6 players. ${state.players[0].name}, your turn. Aces, empty.`);
+                    } else {
+                        state.inputMode = 'setup_choice';
+                        window.playGameSound('select');
+                        window.announce(`${chosenName} added. Press Enter to add another player, or press S to start the game with ${state.players.length} players.`);
+                    }
+                }
+                return;
+            } else if (state.inputMode === 'setup_choice') {
+                e.preventDefault();
+                if (e.key === 'Enter') {
+                    state.setupIndex++;
+                    state.nameIndex = 0;
+                    state.inputMode = 'setup';
+                    window.playGameSound('select');
+                    window.announce(`Player ${state.setupIndex + 1}, choose name.`);
+                } else if (e.key.toLowerCase() === 's' && state.players.length > 0) {
+                    state.inputMode = 'nav';
+                    state.setupIndex = 0;
+                    window.playGameSound('save');
+                    window.saveState();
+                    window.renderScorecard();
+                    window.announce(`Game started with ${state.players.length} players. ${state.players[0].name}, your turn. Aces, empty.`);
+                }
+                return;
+            }
+
             if (e.key.toLowerCase() === 'm') {
                 e.preventDefault();
                 window.playGameSound('startup');
@@ -390,7 +442,7 @@
                     window.playGameSound('undo');
                     window.saveState();
                     window.renderScorecard();
-                    window.announce(`Undo. Player ${pIndex + 1} ${targetCategory.name} cleared.`);
+                    window.announce(`Undo. ${state.players[pIndex].name}, ${targetCategory.name} cleared.`);
                     return;
                 }
 
@@ -440,7 +492,7 @@
                         lowerTotal: { name: "Lower Total", value: lowerTotal },
                         grandTotal: { name: "Grand Total", value: upperSubtotal + (upperSubtotal >= 63 ? 35 : 0) + lowerTotal }
                     };
-                    window.announce(`Player ${state.currentPlayerIndex + 1}. ${totalsMap[state.currentCategory].name}. ${totalsMap[state.currentCategory].value}.`);
+                    window.announce(`${state.players[state.currentPlayerIndex].name}. ${totalsMap[state.currentCategory].name}. ${totalsMap[state.currentCategory].value}.`);
                     return;
                 }
 
@@ -462,10 +514,10 @@
                         const currentCat = state.players[state.currentPlayerIndex].categories[state.currentCategory];
                         // If currentCategory is a total row, it won't be in categories
                         if (['upperSubtotal','upperBonus','lowerTotal','grandTotal'].includes(state.currentCategory)) {
-                             window.announce(`Player ${state.currentPlayerIndex + 1}. ${state.currentCategory}.`);
+                             window.announce(`${state.players[state.currentPlayerIndex].name}. ${state.currentCategory}.`);
                         } else {
                              const scoreStatus = currentCat.value === null ? 'Empty' : (currentCat.value === 0 ? 'Scratched' : `Score ${currentCat.value}`);
-                             window.announce(`Player ${state.currentPlayerIndex + 1}. ${currentCat.name}. ${scoreStatus}.`);
+                             window.announce(`${state.players[state.currentPlayerIndex].name}. ${currentCat.name}. ${scoreStatus}.`);
                         }
                     }
                     return;
@@ -479,7 +531,34 @@
                     const bonus = upper >= 63 ? 35 : 0;
                     const lower = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'].reduce((s, k) => s + (cats[k].value||0), 0);
                     const total = upper + bonus + lower;
-                    window.announce(`Player ${state.currentPlayerIndex + 1} Grand Total: ${total}.`);
+                    window.announce(`${state.players[state.currentPlayerIndex].name} Grand Total: ${total}.`);
+                    return;
+                }
+
+                if (e.key.toLowerCase() === 'x') {
+                    e.preventDefault();
+
+                    window.playGameSound('select');
+                    const cats = state.players[state.currentPlayerIndex].categories;
+                    const upperRemaining = ['1', '2', '3', '4', '5', '6'].filter(k => cats[k].value === null).map(k => cats[k].name + '.');
+                    const lowerRemaining = ['T', 'F', 'H', 'S', 'L', 'Y', 'C'].filter(k => cats[k].value === null).map(k => cats[k].name + '.');
+
+                    let announcement = `Remaining for ${state.players[state.currentPlayerIndex].name}: `;
+
+                    if (upperRemaining.length > 0) {
+                        announcement += "Upper Section: " + upperRemaining.join(', ') + " ";
+                    }
+
+                    if (lowerRemaining.length > 0) {
+                        announcement += "Lower Section: " + lowerRemaining.join(', ') + " ";
+                    }
+
+                    if (upperRemaining.length === 0 && lowerRemaining.length === 0) {
+                        window.announce(`All categories filled for ${state.players[state.currentPlayerIndex].name}.`);
+                    } else {
+                        window.announce(announcement);
+                    }
+
                     return;
                 }
 
