@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>YAY! v1.2.6</title>
+    <title>YAY! v1.2.5a</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -132,12 +132,8 @@
 
         window.playGameSound = function(action) {
             switch(action) {
-                case 'startup': playSequence(['sine','sine','sine'], [400, 523, 659], 0.1, 0.5); break;
-                case 'nav': playTone('sine', 880, 440, 0.05, 0.4); break;
-                case 'select': playSequence(['sine','sine'], [660, 880], 0.08, 0.4); break;
-                case 'save': playChord([523.25, 659.25, 783.99, 1046.50], 0.3, 0.5); break;
-                case 'cancel': playTone('sine', 440, 220, 0.1, 0.4); break;
-                case 'limit': playTone('sine', 220, 110, 0.1, 0.5); break;
+                case 'startup': playSequence(['sine','sine','sine'], [400, 523, 659], 0.1, 0.2); break;
+                case 'nav': playTone('sine', 880, 440, 0.05, 0.1); break;
             }
         };
 
@@ -178,10 +174,10 @@
         };
 
         window.initGame = function() {
-            setTimeout(() => { window.playGameSound('startup'); }, 50);
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
+            setTimeout(() => { window.playGameSound('startup'); }, 1500);
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
             // Hydration
@@ -189,13 +185,13 @@
             if (saved) {
                 try {
                     window.YAHTZEE_STATE = JSON.parse(saved);
-                    window.announce("Yes! Accessible Yahtzee version 1.2.6. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.announce("Yes! Accessible Yahtzee version 1.2.5a. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {
                     console.error("Save file corrupted", e);
-                    window.announce("Yes! Accessible Yahtzee version 1.2.6 initialized. Press Up or Down arrows to navigate.");
+                    window.announce("Yes! Accessible Yahtzee version 1.2.5a initialized. Press Up or Down arrows to navigate.");
                 }
             } else {
-                window.announce("Yes! Accessible Yahtzee version 1.2.6 initialized. Press Up or Down arrows to navigate.");
+                window.announce("Yes! Accessible Yahtzee version 1.2.5a initialized. Press Up or Down arrows to navigate.");
             }
             
             window.renderScorecard();
@@ -431,6 +427,7 @@
 
                 if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault();
+                    window.playGameSound('nav');
 
                     // Build the dynamic navigation list
                     const upperKeys = ['1', '2', '3', '4', '5', '6'];
@@ -444,19 +441,10 @@
                     let nextIndex;
 
                     if (e.key === 'ArrowDown') {
-                        nextIndex = currentIndex + 1;
-                        if (nextIndex >= fullNavOrder.length) nextIndex = currentIndex;
+                        nextIndex = (currentIndex + 1) % fullNavOrder.length;
                     } else { // ArrowUp
-                        nextIndex = currentIndex - 1;
-                        if (nextIndex < 0) nextIndex = currentIndex;
+                        nextIndex = (currentIndex - 1 + fullNavOrder.length) % fullNavOrder.length;
                     }
-
-                    if (currentIndex === nextIndex) {
-                        window.playGameSound('limit');
-                    } else {
-                        window.playGameSound('nav');
-                    }
-
                     state.currentCategory = fullNavOrder[nextIndex];
                     window.renderScorecard();
 
@@ -486,7 +474,6 @@
                     if (totalKeys.includes(state.currentCategory)) {
                         return; // Do not allow scoring on total rows
                     }
-                    window.playGameSound('select');
                     state.inputMode = 'score';
                     state.tempScore = category.value === null ? 0 : category.value;
                     window.announce(`Set score for ${category.name}. ${state.tempScore}.`);
@@ -495,12 +482,10 @@
             } else if (state.inputMode === 'score') {
                 e.preventDefault();
                 if (e.key === 'Escape') {
-                    window.playGameSound('cancel');
                     state.inputMode = 'nav';
                     window.announce("Cancelled.");
                     window.renderScorecard();
                 } else if (e.key === 'Enter') {
-                    window.playGameSound('save');
                     category.value = state.tempScore;
                     state.inputMode = 'nav';
                     window.saveState(); // Save on commit
