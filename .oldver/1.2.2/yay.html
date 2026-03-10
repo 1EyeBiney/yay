@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YAY! v1.2.2</title>
+    <style>
+        /* CSS for high contrast dark mode */
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #game-container {
+            width: 80%;
+            max-width: 600px;
+            border: 2px solid #ffffff;
+            padding: 20px;
+            min-height: 400px;
+            outline: none;
+        }
+
+        #game-container:focus {
+            border-color: #00ff00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        button {
+            font-size: 1.2rem;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #555;
+            padding: 12px;
+            text-align: left;
+            font-size: 1.1rem;
+        }
+
+        th {
+            background-color: #2a2a2a;
+        }
+
+        .current-category {
+            background-color: #333333;
+            outline: 2px solid #00ff00;
+        }
+
+        .total-row td {
+            font-weight: bold;
+            background-color: #202020;
+            border-top: 2px solid #777;
+        }
+
+        .section-divider td {
+            border-bottom: 3px solid #999;
+            padding: 2px 0;
+        }
+    </style>
+</head>
+<body>
+    <button id="initBtn" autofocus onclick="initGame()">Start Yahtzee</button>
+    <div id="game-container" tabindex="0" role="application" aria-label="Yahtzee Scorecard.">
+        <h1 style="text-align: center;">Yahtzee Scorecard</h1>
+    </div>
+    <div id="aria-announce" class="sr-only" aria-live="assertive"></div>
+
+    <script>
+        window.audioCtx = null;
+        function initAudio() { 
+            if(!window.audioCtx) { window.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
+            if(window.audioCtx.state === 'suspended') window.audioCtx.resume(); 
+        }
+
+        function playTone(type, f1, f2, dur, vol) {
+            initAudio(); const osc = window.audioCtx.createOscillator(); const gain = window.audioCtx.createGain();
+            osc.type = type; const now = window.audioCtx.currentTime;
+            osc.frequency.setValueAtTime(f1, now);
+            if (f2) { try { osc.frequency.exponentialRampToValueAtTime(f2, now + dur); } catch(e) { osc.frequency.setValueAtTime(f2, now+dur); } }
+            gain.gain.setValueAtTime(vol, now); gain.gain.exponentialRampToValueAtTime(0.01, now + dur);
+            osc.connect(gain); gain.connect(window.audioCtx.destination);
+            osc.start(now); osc.stop(now + dur);
+        }
+
+        function playEcho(type, f1, f2, dur, vol, del) {
+            initAudio(); const osc = window.audioCtx.createOscillator(); const gain = window.audioCtx.createGain();
+            const delay = window.audioCtx.createDelay(); const feedback = window.audioCtx.createGain();
+            osc.type = type; const now = window.audioCtx.currentTime;
+            osc.frequency.setValueAtTime(f1, now);
+            if (f2) { try { osc.frequency.exponentialRampToValueAtTime(f2, now + dur); } catch(e) { osc.frequency.setValueAtTime(f2, now+dur); } }
+            gain.gain.setValueAtTime(vol, now); gain.gain.exponentialRampToValueAtTime(0.01, now + dur);
+            delay.delayTime.value = del; feedback.gain.value = 0.4;
+            osc.connect(gain); gain.connect(window.audioCtx.destination);
+            gain.connect(delay); delay.connect(feedback); feedback.connect(delay); delay.connect(window.audioCtx.destination);
+            osc.start(now); osc.stop(now + dur);
+        }
+
+        function playSequence(types, freqs, dur, vol) {
+            initAudio(); freqs.forEach((f, i) => { setTimeout(() => playTone(types[i]||'sine', f, null, dur, vol), i * (dur * 1000)); });
+        }
+
+        function playChord(freqs, duration, vol) {
+            initAudio(); freqs.forEach(f => playTone('sine', f, null, duration, vol / freqs.length));
+        }
+
+        window.playGameSound = function(action) {
+            switch(action) {
+                case 'startup': playSequence(['sine','sine','sine'], [400, 523, 659], 0.1, 0.2); break;
+            }
+        };
+
+        window.YAHTZEE_STATE = {
+          // null = empty/unused. 0 = deliberately scratched.
+          categories: {
+            1: { name: "Aces", value: null, max: 5, step: 1 },
+            2: { name: "Twos", value: null, max: 10, step: 2 },
+            3: { name: "Threes", value: null, max: 15, step: 3 },
+            4: { name: "Fours", value: null, max: 20, step: 4 },
+            5: { name: "Fives", value: null, max: 25, step: 5 },
+            6: { name: "Sixes", value: null, max: 30, step: 6 },
+            T: { name: "Three of a Kind", value: null, max: 30, step: 1 },
+            F: { name: "Four of a Kind", value: null, max: 30, step: 1 },
+            H: { name: "Full House", value: null, fixed: [0, 25] },
+            S: { name: "Small Straight", value: null, fixed: [0, 30] },
+            L: { name: "Large Straight", value: null, fixed: [0, 40] },
+            Y: { name: "Yahtzee", value: null, fixed: [0, 50] },
+            C: { name: "Chance", value: null, max: 30, step: 1 },
+            B: { name: "Yahtzee Bonus", value: 0, max: 300, step: 100, locked: true } // Unlocks if Y >= 50
+          },
+          currentCategory: '1', // Tracks current cursor position
+          inputMode: 'nav',     // 'nav', 'score', or 'confirm_reset'
+          tempScore: 0,         // Tracks the number being dialed in 'score' mode
+          history: [],          // Array of last 5 game objects
+          topScores: []         // Array of top 10 highest game objects (sorted descending)
+        };
+
+        window.saveState = function() {
+            localStorage.setItem('YAHTZEE_DATA', JSON.stringify(window.YAHTZEE_STATE));
+        };
+
+        window.announce = function(msg) {
+            const el = document.getElementById('aria-announce');
+            if (el) {
+                el.textContent = msg;
+            }
+        };
+
+        window.initGame = function() {
+            document.getElementById('initBtn').style.display = 'none';
+            const container = document.getElementById('game-container');
+            container.focus();
+            setTimeout(() => { window.playGameSound('startup'); }, 1500);
+            container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
+            
+            // Hydration
+            const saved = localStorage.getItem('YAHTZEE_DATA');
+            if (saved) {
+                try {
+                    window.YAHTZEE_STATE = JSON.parse(saved);
+                    window.announce("Yes! Accessible Yahtzee version 1.1.0. Previous game restored. Press Up or Down arrows to navigate.");
+                } catch (e) {
+                    console.error("Save file corrupted", e);
+                    window.announce("Yes! Accessible Yahtzee version 1.1.0 initialized. Press Up or Down arrows to navigate.");
+                }
+            } else {
+                window.announce("Yes! Accessible Yahtzee version 1.1.0 initialized. Press Up or Down arrows to navigate.");
+            }
+            
+            window.renderScorecard();
+        };
+
+        window.renderScorecard = function() {
+            const container = document.getElementById('game-container');
+            const state = window.YAHTZEE_STATE;
+            const categories = state.categories;
+            const currentKey = state.currentCategory;
+
+            // --- Math Engine ---
+            const upperKeys = ['1', '2', '3', '4', '5', '6'];
+            const lowerKeys = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'];
+            
+            const upperSubtotal = upperKeys.reduce((sum, key) => sum + (categories[key].value || 0), 0);
+            const upperBonus = upperSubtotal >= 63 ? 35 : 0;
+            const upperTotal = upperSubtotal + upperBonus;
+
+            const lowerTotal = lowerKeys.reduce((sum, key) => sum + (categories[key].value || 0), 0);
+
+            const grandTotal = upperTotal + lowerTotal;
+            // --- End Math Engine ---
+
+
+            let tableHtml = `
+                <table id="scorecard-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            // Upper Section
+            for (const key of upperKeys) {
+                const category = categories[key];
+                const isCurrent = key === currentKey;
+                let score = category.value === null ? '--' : category.value;
+                if (state.inputMode === 'score' && isCurrent) {
+                    score = `[ ${state.tempScore} ]`;
+                }
+                
+                tableHtml += `
+                    <tr class="${isCurrent ? 'current-category' : ''}" data-key="${key}">
+                        <td>${category.name}</td>
+                        <td>${score}</td>
+                    </tr>
+                `;
+            }
+
+            // Upper Totals
+            const isUpperSubCurrent = state.currentCategory === 'upperSubtotal';
+            const isUpperBonusCurrent = state.currentCategory === 'upperBonus';
+            tableHtml += `
+                    <tr class="total-row ${isUpperSubCurrent ? 'current-category' : ''}" data-key="upperSubtotal">
+                        <td>Upper Subtotal</td><td>${upperSubtotal}</td>
+                    </tr>
+                    <tr class="total-row ${isUpperBonusCurrent ? 'current-category' : ''}" data-key="upperBonus">
+                        <td>Upper Bonus</td><td>${upperBonus}</td>
+                    </tr>
+            `;
+
+            // Separator
+            tableHtml += `<tr class="section-divider"><td colspan="2"></td></tr>`;
+
+            // Lower Section
+            for (const key of lowerKeys) {
+                const category = categories[key];
+                const isCurrent = key === currentKey;
+                let score = category.value === null ? '--' : category.value;
+                if (state.inputMode === 'score' && isCurrent) {
+                    score = `[ ${state.tempScore} ]`;
+                }
+                tableHtml += `
+                    <tr class="${isCurrent ? 'current-category' : ''}" data-key="${key}">
+                        <td>${category.name}</td>
+                        <td>${score}</td>
+                    </tr>
+                `;
+            }
+
+            // Final Totals
+            const isLowerTotalCurrent = state.currentCategory === 'lowerTotal';
+            const isGrandTotalCurrent = state.currentCategory === 'grandTotal';
+            tableHtml += `
+                    <tr class="total-row ${isLowerTotalCurrent ? 'current-category' : ''}" data-key="lowerTotal"><td>Lower Total</td><td>${lowerTotal}</td></tr>
+                    <tr class="total-row ${isGrandTotalCurrent ? 'current-category' : ''}" data-key="grandTotal"><td><strong>Grand Total</strong></td><td><strong>${grandTotal}</strong></td></tr>
+                </tbody>
+            </table>`;
+            
+            const existingTable = document.getElementById('scorecard-table');
+            if (existingTable) {
+                existingTable.remove();
+            }
+            container.insertAdjacentHTML('beforeend', tableHtml);
+        };
+
+        window.addEventListener('keydown', function(e) {
+            const state = window.YAHTZEE_STATE;
+            
+            if (e.key.toLowerCase() === 'm') {
+                e.preventDefault();
+                window.playGameSound('startup');
+                return; // Stop any other logic, NO ARIA announcement.
+            }
+
+            // Developer Shortcuts (Ctrl + Shift)
+            if (e.ctrlKey && e.shiftKey) {
+                if (e.code === 'Digit1') {
+                    e.preventDefault();
+                    ['1', '2', '3', '4', '5', '6'].forEach(k => state.categories[k].value = state.categories[k].max);
+                    window.renderScorecard();
+                    window.announce("Dev Mode: Upper Section Maxed.");
+                    return;
+                }
+                if (e.code === 'Digit9') {
+                    e.preventDefault();
+                    localStorage.removeItem('YAHTZEE_DATA');
+                    location.reload();
+                    return;
+                }
+                if (e.code === 'Digit0') {
+                    e.preventDefault();
+                    const fakeScore = { score: 500, date: "10:04 PM, Thursday, March 14, 2026" };
+                    state.topScores.push(fakeScore);
+                    state.topScores.sort((a, b) => b.score - a.score);
+                    if (state.topScores.length > 10) state.topScores.pop();
+                    window.saveState();
+                    window.announce("Dev Mode: High Score Injected.");
+                    return;
+                }
+            }
+
+            const category = state.categories[state.currentCategory];
+
+            if (state.inputMode === 'nav') {
+                // History (E)
+                if (e.key.toLowerCase() === 'e') {
+                    e.preventDefault();
+                    if (state.history.length === 0) {
+                        window.announce("No game history available.");
+                    } else {
+                        const historyStr = state.history.map(h => `${h.score} points, ${h.date}`).join('. ');
+                        window.announce(`Last ${state.history.length} games: ${historyStr}.`);
+                    }
+                    return;
+                }
+
+                // Leaderboard (0)
+                if (e.key === '0') {
+                    e.preventDefault();
+                    if (state.topScores.length === 0) {
+                        window.announce("No top scores yet.");
+                    } else {
+                        const topStr = state.topScores.map((s, i) => `Number ${i+1}, ${s.score} points, ${s.date}`).join('. ');
+                        window.announce(`Top Scores: ${topStr}.`);
+                    }
+                    return;
+                }
+
+                // Reset (Q)
+                if (e.key.toLowerCase() === 'q') {
+                    e.preventDefault();
+                    state.inputMode = 'confirm_reset';
+                    
+                    // Calculate current total
+                    const upperKeys = ['1', '2', '3', '4', '5', '6'];
+                    const lowerKeys = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'];
+                    const upperSub = upperKeys.reduce((sum, k) => sum + (state.categories[k].value || 0), 0);
+                    const bonus = upperSub >= 63 ? 35 : 0;
+                    const lower = lowerKeys.reduce((sum, k) => sum + (state.categories[k].value || 0), 0);
+                    const total = upperSub + bonus + lower;
+
+                    window.announce(`Reset the board? Your score is ${total}. Press Y to confirm, N to cancel.`);
+                    return;
+                }
+
+                if (e.key === 'PageDown' || e.key === 'PageUp') {
+                    e.preventDefault();
+                    const totalJumpOrder = ['upperSubtotal', 'lowerTotal', 'grandTotal'];
+                    let currentIndex = totalJumpOrder.indexOf(state.currentCategory);
+
+                    let nextIndex;
+                    if (currentIndex === -1) {
+                        nextIndex = e.key === 'PageUp' ? totalJumpOrder.length - 1 : 0;
+                    } else {
+                        if (e.key === 'PageDown') {
+                            nextIndex = (currentIndex + 1) % totalJumpOrder.length;
+                        } else { // PageUp
+                            nextIndex = (currentIndex - 1 + totalJumpOrder.length) % totalJumpOrder.length;
+                        }
+                    }
+                    state.currentCategory = totalJumpOrder[nextIndex];
+                    window.renderScorecard();
+
+                    // Announce new total
+                    const upperSubtotal = ['1', '2', '3', '4', '5', '6'].reduce((sum, key) => sum + (state.categories[key].value || 0), 0);
+                    const lowerTotal = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'].reduce((sum, key) => sum + (state.categories[key].value || 0), 0);
+                    const totalsMap = {
+                        upperSubtotal: { name: "Upper Subtotal", value: upperSubtotal },
+                        lowerTotal: { name: "Lower Total", value: lowerTotal },
+                        grandTotal: { name: "Grand Total", value: upperSubtotal + (upperSubtotal >= 63 ? 35 : 0) + lowerTotal }
+                    };
+                    window.announce(`${totalsMap[state.currentCategory].name}. ${totalsMap[state.currentCategory].value}.`);
+                    return;
+                }
+
+                // Hotkeys
+                const lowerKey = e.key.toLowerCase();
+                const hotkeyMap = {
+                    '1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
+                    't': 'T', 'f': 'F', 'h': 'H', 's': 'S', 'l': 'L', 'y': 'Y', 'c': 'C',
+                };
+
+                // Yahtzee Bonus hotkey is only active if Yahtzee has been scored.
+                if (state.categories['Y'].value === 50) {
+                    hotkeyMap['b'] = 'B';
+                }
+
+                if (hotkeyMap[lowerKey]) {
+                    e.preventDefault();
+                    state.currentCategory = hotkeyMap[lowerKey];
+                    window.renderScorecard();
+                    const newCategory = state.categories[state.currentCategory];
+                    const scoreStatus = newCategory.value === null ? 'Empty' : `Score ${newCategory.value}`;
+                    window.announce(`${newCategory.name}. ${scoreStatus}.`);
+                    return;
+                }
+
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+
+                    // Build the dynamic navigation list
+                    const upperKeys = ['1', '2', '3', '4', '5', '6'];
+                    let lowerKeys = ['T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+                    if (state.categories['Y'].value === 50) {
+                        lowerKeys.push('B');
+                    }
+                    const fullNavOrder = [...upperKeys, 'upperSubtotal', 'upperBonus', ...lowerKeys, 'lowerTotal', 'grandTotal'];
+
+                    const currentIndex = fullNavOrder.indexOf(state.currentCategory);
+                    let nextIndex;
+
+                    if (e.key === 'ArrowDown') {
+                        nextIndex = (currentIndex + 1) % fullNavOrder.length;
+                    } else { // ArrowUp
+                        nextIndex = (currentIndex - 1 + fullNavOrder.length) % fullNavOrder.length;
+                    }
+                    state.currentCategory = fullNavOrder[nextIndex];
+                    window.renderScorecard();
+
+                    // Announce based on whether it's a category or a total
+                    const totalKeys = ['upperSubtotal', 'upperBonus', 'lowerTotal', 'grandTotal'];
+                    if (totalKeys.includes(state.currentCategory)) {
+                        const upperKeys = ['1', '2', '3', '4', '5', '6'];
+                        const upperSubtotal = upperKeys.reduce((sum, key) => sum + (state.categories[key].value || 0), 0);
+                        const upperBonus = upperSubtotal >= 63 ? 35 : 0;
+                        const lowerTotal = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'].reduce((sum, key) => sum + (state.categories[key].value || 0), 0);
+                        const grandTotal = upperSubtotal + upperBonus + lowerTotal;
+                        const totalsMap = {
+                            upperSubtotal: { name: "Upper Subtotal", value: upperSubtotal },
+                            upperBonus: { name: "Upper Bonus", value: upperBonus },
+                            lowerTotal: { name: "Lower Total", value: lowerTotal },
+                            grandTotal: { name: "Grand Total", value: grandTotal }
+                        };
+                        window.announce(`${totalsMap[state.currentCategory].name}. ${totalsMap[state.currentCategory].value}.`);
+                    } else {
+                        const newCategory = state.categories[state.currentCategory];
+                        const scoreStatus = newCategory.value === null ? 'Empty' : `Score ${newCategory.value}`;
+                        window.announce(`${newCategory.name}. ${scoreStatus}.`);
+                    }
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const totalKeys = ['upperSubtotal', 'upperBonus', 'lowerTotal', 'grandTotal'];
+                    if (totalKeys.includes(state.currentCategory)) {
+                        return; // Do not allow scoring on total rows
+                    }
+                    state.inputMode = 'score';
+                    state.tempScore = category.value === null ? 0 : category.value;
+                    window.announce(`Set score for ${category.name}. ${state.tempScore}.`);
+                    window.renderScorecard();
+                }
+            } else if (state.inputMode === 'score') {
+                e.preventDefault();
+                if (e.key === 'Escape') {
+                    state.inputMode = 'nav';
+                    window.announce("Cancelled.");
+                    window.renderScorecard();
+                } else if (e.key === 'Enter') {
+                    category.value = state.tempScore;
+                    state.inputMode = 'nav';
+                    window.saveState(); // Save on commit
+                    window.renderScorecard();
+                    window.announce(`${state.tempScore} points saved in ${category.name}.`);
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    if (category.fixed) {
+                        const currentIndex = category.fixed.indexOf(state.tempScore);
+                        let nextIndex = e.key === 'ArrowUp' ? currentIndex + 1 : currentIndex - 1;
+                        if (nextIndex >= category.fixed.length) nextIndex = 0;
+                        if (nextIndex < 0) nextIndex = category.fixed.length - 1;
+                        state.tempScore = category.fixed[nextIndex];
+                    } else {
+                        const step = e.shiftKey ? (category.step * 5) : category.step;
+                        if (e.key === 'ArrowUp') {
+                            state.tempScore += step;
+                        } else { // ArrowDown
+                            state.tempScore -= step;
+                        }
+                        // Clamp the value
+                        if (state.tempScore > category.max) state.tempScore = category.max;
+                        if (state.tempScore < 0) state.tempScore = 0;
+                    }
+                    window.announce(state.tempScore);
+                    window.renderScorecard();
+                }
+            } else if (state.inputMode === 'confirm_reset') {
+                e.preventDefault();
+                if (e.key.toLowerCase() === 'n') {
+                    state.inputMode = 'nav';
+                    window.announce("Reset cancelled.");
+                } else if (e.key.toLowerCase() === 'y') {
+                    // Calculate Final Score
+                    const upperKeys = ['1', '2', '3', '4', '5', '6'];
+                    const lowerKeys = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'];
+                    const upperSub = upperKeys.reduce((sum, k) => sum + (state.categories[k].value || 0), 0);
+                    const bonus = upperSub >= 63 ? 35 : 0;
+                    const lower = lowerKeys.reduce((sum, k) => sum + (state.categories[k].value || 0), 0);
+                    const grandTotal = upperSub + bonus + lower;
+
+                    // Update History
+                    const gameRecord = { score: grandTotal, date: new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit'}) + ', ' + new Date().toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'}) };
+                    state.history.unshift(gameRecord);
+                    if (state.history.length > 5) state.history.pop();
+
+                    // Update Leaderboard
+                    state.topScores.push(gameRecord);
+                    state.topScores.sort((a, b) => b.score - a.score);
+                    if (state.topScores.length > 10) state.topScores.pop();
+
+                    // Reset Categories
+                    Object.keys(state.categories).forEach(k => {
+                        if (k === 'B') {
+                            state.categories[k].value = 0;
+                        } else {
+                            state.categories[k].value = null;
+                        }
+                    });
+                    
+                    state.currentCategory = '1';
+                    state.inputMode = 'nav';
+                    window.saveState();
+                    window.renderScorecard();
+                    window.announce("Game saved and reset.");
+                }
+            }
+        });
+    </script>
+</body>
+</html>
