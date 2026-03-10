@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>YAY! v1.3.2.1</title>
+    <title>YAY! v1.3.2</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -195,20 +195,14 @@
             const saved = localStorage.getItem('YAHTZEE_DATA');
             if (saved) {
                 try {
-                    const parsed = JSON.parse(saved);
-                    // Check if this is an old single-player save file
-                    if (!parsed.players || !Array.isArray(parsed.players)) {
-                        throw new Error("Legacy save state detected.");
-                    }
-                    window.YAHTZEE_STATE = parsed;
-                    window.announce("Yes! Accessible Yahtzee version 1.3.2.1. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.YAHTZEE_STATE = JSON.parse(saved);
+                    window.announce("Yes! Accessible Yahtzee version 1.3.2. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {
-                    console.warn("Cleared incompatible save file:", e.message);
-                    localStorage.removeItem('YAHTZEE_DATA'); // Clear the bad data
-                    window.announce("Yes! Accessible Yahtzee version 1.3.2.1 initialized. Press Up or Down arrows to navigate.");
+                    console.error("Save file corrupted", e);
+                    window.announce("Yes! Accessible Yahtzee version 1.3.2 initialized. Press Up or Down arrows to navigate.");
                 }
             } else {
-                window.announce("Yes! Accessible Yahtzee version 1.3.2.1 initialized. Press Up or Down arrows to navigate.");
+                window.announce("Yes! Accessible Yahtzee version 1.3.2 initialized. Press Up or Down arrows to navigate.");
             }
             
             window.renderScorecard();
