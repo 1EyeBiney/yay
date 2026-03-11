@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v1.4.7</title>
+        <title>YAY! v1.4.9</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -112,8 +112,8 @@
     </style>
 </head>
 <body>
-    <button id="initBtn" autofocus onclick="initGame()">Start Yahtzee</button>
-    <div id="game-container" tabindex="0" role="application" aria-label="Yahtzee Scorecard.">
+    <button id="initBtn" autofocus onclick="initGame()">Press Enter to Begin</button>
+    <div id="game-container" tabindex="0" role="application" aria-label="Application: YAY! Accessible Yahtzee">
         <h1 style="text-align: center;">Yahtzee Scorecard</h1>
     </div>
     <div id="aria-announce" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
@@ -370,7 +370,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.4.7 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.4.9 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -507,6 +507,7 @@
         };
 
         window.addEventListener('keydown', function(e) {
+            if (e.key === 'F5') return;
             initAudio();
             const state = window.YAHTZEE_STATE;
             
@@ -680,7 +681,7 @@
                         state.heldDice[index] = !state.heldDice[index];
                         state.heldDice[index] ? window.playGameSound('hold') : window.playGameSound('release');
                         const status = state.heldDice[index] ? "Held" : "Released";
-                        window.announce(`Die ${index + 1}, ${state.dice[index]}, ${status}.`);
+                        window.announce(`${state.dice[index]}, ${status}.`);
                         window.renderScorecard();
                         return;
                     }
