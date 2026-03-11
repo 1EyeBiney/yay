@@ -1,4 +1,4 @@
-/* core.js - v2.1.0 */
+/* core.js - v2.1.1 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         function getDefaultCategories() {
@@ -251,11 +251,18 @@
 
                 state.currentCategory = bestCat;
                 window.renderScorecard();
-                // Trigger the voice line, THEN dispatch the Enter key
+                // Announce the selection first so it logs for the screen reader
                 window.playGameSound('valueTick');
-                window.playBotAudio('bot_score', `${p.name} selects ${cats[bestCat].name}.`, () => {
-                    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
-                    window.dispatchEvent(enterEvent);
-                });
+                const scoreStr = bestScore === 0 ? 'a scratch' : `${bestScore} points`;
+                window.announce(`${p.name} selects ${cats[bestCat].name} for ${scoreStr}.`);
+                
+                // Wait for ARIA, then play the reaction MP3, THEN dispatch Enter to lock it in
+                const delay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 4500 : 6000);
+                setTimeout(() => {
+                    window.playBotAudio('bot_score', null, () => {
+                        const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+                        window.dispatchEvent(enterEvent);
+                    });
+                }, delay);
             }
         };

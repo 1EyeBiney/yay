@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v2.1.0</title>
+        <title>YAY! v2.1.1</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -121,7 +121,7 @@
     <script src="audio.js"></script>
     <script src="core.js"></script>
     <script>
-        /* index.html logic - v2.1.0 */
+        /* index.html logic - v2.1.1 */
         window.announce = function(msg) {
             const el = document.getElementById('aria-announce');
             if (el) {
@@ -137,7 +137,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 2.1.0 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 2.1.1 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -830,6 +830,28 @@
                 } else if (e.key === ' ' || e.key.toLowerCase() === 'r') {
                     const calcScore = window.calculateScore(state.dice, state.currentCategory);
                     window.announce(`${cats[state.currentCategory].name}. Potential score: ${calcScore === 0 ? 'Scratch, 0' : calcScore}.`);
+                } else {
+                    // Category Hotkeys in Placement Mode
+                    const lowerKey = e.key.toLowerCase();
+                    const hotkeyMap = {
+                        '1': '1', '2': '2', '3': '3', '4': '4', '5': '5', '6': '6',
+                        't': 'T', 'f': 'F', 'h': 'H', 's': 'S', 'l': 'L', 'y': 'Y', 'a': 'C'
+                    };
+                    if (cats['Y'].value === 50) hotkeyMap['b'] = 'B';
+
+                    if (hotkeyMap[lowerKey]) {
+                        const targetCat = hotkeyMap[lowerKey];
+                        if (available.includes(targetCat)) {
+                            state.currentCategory = targetCat;
+                            const calcScore = window.calculateScore(state.dice, state.currentCategory);
+                            window.playGameSound('valueTick');
+                            window.announce(`${cats[state.currentCategory].name}. Potential score: ${calcScore === 0 ? 'Scratch, 0' : calcScore}.`);
+                            window.renderScorecard();
+                        } else {
+                            window.playGameSound('limit');
+                            window.announce(`${cats[targetCat].name} is already filled.`);
+                        }
+                    }
                 }
             } else if (state.inputMode === 'score') {
                 e.preventDefault();
