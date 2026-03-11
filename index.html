@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v1.5.1</title>
+        <title>YAY! v2.1.0</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -118,141 +118,10 @@
     </div>
     <div id="aria-announce" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
 
+    <script src="audio.js"></script>
+    <script src="core.js"></script>
     <script>
-        const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
-        window.audioCtx = null;
-        function initAudio() { 
-            if(!window.audioCtx) { window.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
-            if(window.audioCtx.state === 'suspended') window.audioCtx.resume(); 
-        }
-
-        function playTone(type, f1, f2, dur, vol) {
-            initAudio(); const osc = window.audioCtx.createOscillator(); const gain = window.audioCtx.createGain();
-            osc.type = type; const now = window.audioCtx.currentTime;
-            osc.frequency.setValueAtTime(f1, now);
-            if (f2) { try { osc.frequency.exponentialRampToValueAtTime(f2, now + dur); } catch(e) { osc.frequency.setValueAtTime(f2, now+dur); } }
-            gain.gain.setValueAtTime(vol, now); gain.gain.exponentialRampToValueAtTime(0.01, now + dur);
-            osc.connect(gain); gain.connect(window.audioCtx.destination);
-            osc.start(now); osc.stop(now + dur);
-        }
-
-        function playEcho(type, f1, f2, dur, vol, del) {
-            initAudio(); const osc = window.audioCtx.createOscillator(); const gain = window.audioCtx.createGain();
-            const delay = window.audioCtx.createDelay(); const feedback = window.audioCtx.createGain();
-            osc.type = type; const now = window.audioCtx.currentTime;
-            osc.frequency.setValueAtTime(f1, now);
-            if (f2) { try { osc.frequency.exponentialRampToValueAtTime(f2, now + dur); } catch(e) { osc.frequency.setValueAtTime(f2, now+dur); } }
-            gain.gain.setValueAtTime(vol, now); gain.gain.exponentialRampToValueAtTime(0.01, now + dur);
-            delay.delayTime.value = del; feedback.gain.value = 0.4;
-            osc.connect(gain); gain.connect(window.audioCtx.destination);
-            gain.connect(delay); delay.connect(feedback); feedback.connect(delay); delay.connect(window.audioCtx.destination);
-            osc.start(now); osc.stop(now + dur);
-        }
-
-        function playSequence(types, freqs, dur, vol) {
-            initAudio(); freqs.forEach((f, i) => { setTimeout(() => playTone(types[i]||'sine', f, null, dur, vol), i * (dur * 1000)); });
-        }
-
-        function playChord(freqs, duration, vol) {
-            initAudio(); freqs.forEach(f => playTone('sine', f, null, duration, vol / freqs.length));
-        }
-
-        function playArpeggio(freqs, dur, vol, type) {
-            initAudio(); freqs.forEach((f, i) => { setTimeout(() => playTone(type || 'sine', f, null, dur, vol), i * (dur * 1000)); });
-        }
-
-        window.playGameSound = function(action) {
-            switch(action) {
-                case 'startup': playSequence(['sine','sine','sine','sine'], [800,1000,1200,1600], 0.04, 0.18); break;
-                case 'nav': playTone('sine', 880, 440, 0.05, 0.4); break;
-                case 'select': playSequence(['sine','sine'], [660, 880], 0.08, 0.4); break;
-                case 'save': playChord([523.25, 659.25, 783.99, 1046.50], 0.3, 0.5); break;
-                case 'undo': playSequence(['sine','sine','sine'], [1046.50, 783.99, 523.25], 0.1, 0.4); break;
-                case 'cancel': playTone('sine', 440, 220, 0.1, 0.4); break;
-                case 'limit': playTone('sine', 220, 110, 0.1, 0.5); break;
-                case 'roll': [0, 300, 600, 900, 1100, 1300, 1500].forEach((t, i) => { setTimeout(() => playTone('sine', 600, null, 0.08 - i*0.008, 0.2 - i*0.025), t); }); break;
-                case 'hold': playTone('sine', 400, 700, 0.1, 0.2); break;
-                case 'release': playTone('sine', 700, 400, 0.1, 0.2); break;
-                case 'valueTick': playSequence(['sine','sine','sine'], [100, 200, 300], 0.05, 0.3); break;
-                case 'gameStart': playEcho('sine', 600, 800, 0.2, 0.3, 0.2); break;
-                case 'victory': playArpeggio([523, 659, 784, 1047], 0.12, 0.2, 'sine'); setTimeout(() => { playChord([262, 330, 392, 523], 1.5, 0.3); }, 600); setTimeout(() => { playChord([523, 659, 784, 1047], 2.0, 0.3); }, 2200); break;
-            }
-        };
-
-        function getDefaultCategories() {
-            return {
-                1: { name: "Aces", value: null, max: 5, step: 1 },
-                2: { name: "Twos", value: null, max: 10, step: 2 },
-                3: { name: "Threes", value: null, max: 15, step: 3 },
-                4: { name: "Fours", value: null, max: 20, step: 4 },
-                5: { name: "Fives", value: null, max: 25, step: 5 },
-                6: { name: "Sixes", value: null, max: 30, step: 6 },
-                T: { name: "Three of a Kind", value: null, max: 30, step: 1 },
-                F: { name: "Four of a Kind", value: null, max: 30, step: 1 },
-                H: { name: "Full House", value: null, fixed: [0, 25] },
-                S: { name: "Small Straight", value: null, fixed: [0, 30] },
-                L: { name: "Large Straight", value: null, fixed: [0, 40] },
-                Y: { name: "Yahtzee", value: null, fixed: [0, 50] },
-                C: { name: "Chance", value: null, max: 30, step: 1 },
-                B: { name: "Yahtzee Bonus", value: 0, max: 300, step: 100, locked: true } 
-            };
-        }
-
-        window.YAHTZEE_STATE = {
-          players: [],
-          setupIndex: 0,
-          nameIndex: 0,
-          currentPlayerIndex: 0,
-          currentCategory: '1', // Tracks current cursor position
-          inputMode: 'setup',   // 'setup', 'nav', 'score', or 'confirm_reset'
-          gameMode: 'manual',
-          gameOver: false,
-          tempScore: 0,         // Tracks the number being dialed in 'score' mode
-          lastMove: null,
-          history: [],          // Array of last 5 game objects
-          topScores: [],        // Array of top 10 highest game objects (sorted descending)
-          dice: [1, 1, 1, 1, 1],
-          heldDice: [false, false, false, false, false],
-          rollsLeft: 3,
-          speechRate: 'fast'
-        };
-
-        window.calculateScore = function(dice, categoryKey) {
-            const sum = dice.reduce((a, b) => a + b, 0);
-            const counts = {};
-            dice.forEach(d => counts[d] = (counts[d] || 0) + 1);
-            const countValues = Object.values(counts);
-            const hasCount = (n) => countValues.some(c => c >= n);
-
-            switch (categoryKey) {
-                case '1': return (counts[1] || 0) * 1;
-                case '2': return (counts[2] || 0) * 2;
-                case '3': return (counts[3] || 0) * 3;
-                case '4': return (counts[4] || 0) * 4;
-                case '5': return (counts[5] || 0) * 5;
-                case '6': return (counts[6] || 0) * 6;
-                case 'T': return hasCount(3) ? sum : 0;
-                case 'F': return hasCount(4) ? sum : 0;
-                case 'H': return (countValues.includes(3) && countValues.includes(2)) || hasCount(5) ? 25 : 0;
-                case 'S':
-                    const uniqueStr = [...new Set(dice)].sort((a,b)=>a-b).join('');
-                    return (uniqueStr.includes('1234') || uniqueStr.includes('2345') || uniqueStr.includes('3456')) ? 30 : 0;
-                case 'L':
-                    const sortedStr = [...new Set(dice)].sort((a,b)=>a-b).join('');
-                    return (sortedStr === '12345' || sortedStr === '23456') ? 40 : 0;
-                case 'Y': return hasCount(5) ? 50 : 0;
-                case 'C': return sum;
-                case 'B': 
-                    const currentB = window.YAHTZEE_STATE.players[window.YAHTZEE_STATE.currentPlayerIndex].categories['B'].value || 0;
-                    return hasCount(5) ? currentB + 100 : currentB;
-                default: return 0;
-            }
-        };
-
-        window.saveState = function() {
-            localStorage.setItem('YAHTZEE_DATA', JSON.stringify(window.YAHTZEE_STATE));
-        };
-
+        /* index.html logic - v2.1.0 */
         window.announce = function(msg) {
             const el = document.getElementById('aria-announce');
             if (el) {
@@ -263,115 +132,12 @@
             }
         };
 
-        window.checkGameOver = function() {
-            const state = window.YAHTZEE_STATE;
-            const baseKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
-            const isOver = state.players.every(p => baseKeys.every(k => p.categories[k].value !== null));
-
-            if (isOver) {
-                state.gameOver = true;
-                const dateStr = new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit'}) + ', ' + new Date().toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'});
-                let highestScore = -1;
-                let winnerName = "";
-                let results = [];
-
-                state.players.forEach(p => {
-                    const pCats = p.categories;
-                    const upperSub = ['1', '2', '3', '4', '5', '6'].reduce((sum, k) => sum + (pCats[k].value || 0), 0);
-                    const bonus = upperSub >= 63 ? 35 : 0;
-                    const lowerTotal = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'].reduce((sum, k) => sum + (pCats[k].value || 0), 0);
-                    const grandTotal = upperSub + bonus + lowerTotal;
-
-                    if (grandTotal > highestScore) { highestScore = grandTotal; winnerName = p.name; }
-
-                    const gameRecord = { name: p.name, score: grandTotal, date: dateStr };
-                    state.history.unshift(gameRecord);
-                    state.topScores.push(gameRecord);
-                    results.push(`${p.name} scored ${grandTotal}`);
-                });
-
-                if (state.history.length > 5) state.history.length = 5;
-                state.topScores.sort((a, b) => b.score - a.score);
-                if (state.topScores.length > 10) state.topScores.length = 10;
-
-                window.playGameSound('victory');
-                state.inputMode = 'nav';
-                window.saveState();
-                window.renderScorecard();
-
-                const resultStr = results.join('. ');
-                window.announce(`Game Over! ${winnerName} wins with ${highestScore} points! ${resultStr}. Press Q to start a new game, or use arrow keys to review the board.`);
-                return true;
-            }
-            return false;
-        };
-
-        window.getTurnAnnouncement = function(playerIndex) {
-            const state = window.YAHTZEE_STATE;
-            const p = state.players[playerIndex];
-            const cats = p.categories;
-            const baseKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
-            const filled = baseKeys.filter(k => cats[k].value !== null);
-            const empty = baseKeys.filter(k => cats[k].value === null);
-
-            const upperSub = ['1', '2', '3', '4', '5', '6'].reduce((sum, k) => sum + (cats[k].value || 0), 0);
-            const bonus = upperSub >= 63 ? 35 : 0;
-            const lowerTotal = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'].reduce((sum, k) => sum + (cats[k].value || 0), 0);
-            const grandTotal = upperSub + bonus + lowerTotal;
-
-            let listStr = "";
-            if (filled.length === 0) {
-                listStr = "Board is empty";
-            } else if (filled.length < empty.length) {
-                listStr = filled.map(k => cats[k].name + " filled").join(', ');
-            } else {
-                listStr = empty.map(k => cats[k].name + " empty").join(', ');
-            }
-
-            const actionPrompt = state.gameMode === 'digital' ? "Press D to roll dice." : "Press Enter to set score.";
-            return ` ${p.name}, score ${grandTotal}. ${listStr}. ${actionPrompt}`;
-        };
-
-        window.rollDice = function() {
-            const state = window.YAHTZEE_STATE;
-            if (state.rollsLeft > 0) {
-                state.dice = state.dice.map((d, i) => state.heldDice[i] ? d : Math.ceil(Math.random() * 6));
-                state.rollsLeft--;
-                window.playGameSound('roll');
-
-                if (state.rollsLeft === 0) {
-                    // Auto-Funnel into Placement Mode
-                    state.inputMode = 'placement';
-                    const p = state.players[state.currentPlayerIndex];
-                    const cats = p.categories;
-                    const emptyKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
-                    if (cats['Y'].value === 50) emptyKeys.push('B');
-                    const available = emptyKeys.filter(k => cats[k].value === null);
-
-                    // Failsafe: Ensure cursor isn't stuck on a filled or total row
-                    if (!available.includes(state.currentCategory)) {
-                        state.currentCategory = available.length > 0 ? available[0] : '1';
-                    }
-
-                    const calcScore = window.calculateScore(state.dice, state.currentCategory);
-                    window.renderScorecard();
-                    window.announce(`Final roll. ${state.dice.join(', ')}. Placement mode. ${cats[state.currentCategory].name}. Potential score: ${calcScore === 0 ? 'Scratch, 0' : calcScore}.`);
-                } else {
-                    window.announce(`Rolled. ${state.dice.join(', ')}. ${state.rollsLeft} rolls left.`);
-                    window.renderScorecard();
-                }
-            } else {
-                window.playGameSound('limit');
-                window.announce("No rolls left.");
-            }
-        };
-
         window.initGame = function() {
             window.playGameSound('startup');
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.5.1 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 2.1.0 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -517,90 +283,6 @@
             container.insertAdjacentHTML('beforeend', diceHtml);
         };
 
-        window.handleAITurn = function() {
-            const state = window.YAHTZEE_STATE;
-            if (state.gameOver) return;
-            const p = state.players[state.currentPlayerIndex];
-            if (!p.isBot) return;
-            const delay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 4500 : 6000);
-
-            // Phase 1: Initial Roll
-            if (state.inputMode === 'nav' && state.rollsLeft === 3) {
-                window.announce(`${p.name} is thinking...`);
-                window.playGameSound('valueTick');
-                setTimeout(() => {
-                    window.rollDice();
-                    setTimeout(window.handleAITurn, delay);
-                }, delay);
-                return;
-            }
-
-            // Phase 2: Evaluate Holds & Re-roll
-            if (state.inputMode === 'nav' && state.rollsLeft > 0) {
-                const cats = p.categories;
-                let counts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
-                state.dice.forEach(d => counts[d]++);
-                
-                let target = null;
-                // Find highest number that has an open upper category and we have at least one of
-                for (let i = 6; i >= 1; i--) {
-                    if (cats[i.toString()].value === null && counts[i] > 0) {
-                        target = i;
-                        break;
-                    }
-                }
-
-                if (target) {
-                    state.dice.forEach((d, i) => {
-                        state.heldDice[i] = (d === target);
-                    });
-                    window.renderScorecard();
-                    window.playGameSound('hold');
-                    window.announce(`${p.name} holds ${target}s. Rolling...`);
-                } else {
-                    window.announce(`${p.name} holds nothing. Rolling...`);
-                }
-
-                setTimeout(() => {
-                    window.rollDice();
-                    setTimeout(window.handleAITurn, delay);
-                }, delay);
-                return;
-            }
-
-            // Phase 3: Placement Selection
-            if (state.inputMode === 'placement') {
-                const cats = p.categories;
-                const emptyKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
-                if (cats['Y'].value === 50) emptyKeys.push('B');
-                const available = emptyKeys.filter(k => cats[k].value === null || k === 'B');
-
-                let bestCat = available[0];
-                let bestScore = -1;
-
-                available.forEach(k => {
-                    const score = window.calculateScore(state.dice, k);
-                    // Weight: 1.5x priority to Upper Section to simulate "Grinder" personality
-                    let weight = ['1','2','3','4','5','6'].includes(k) ? score * 1.5 : score;
-                    if (weight > bestScore) {
-                        bestScore = weight;
-                        bestCat = k;
-                    }
-                });
-
-                state.currentCategory = bestCat;
-                window.renderScorecard();
-                window.playGameSound('valueTick');
-                window.announce(`${p.name} selects ${cats[bestCat].name}.`);
-
-                // Trigger the actual 'Enter' logic to lock it in and advance turn
-                setTimeout(() => {
-                    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
-                    window.dispatchEvent(enterEvent);
-                }, delay);
-            }
-        };
-
         window.addEventListener('keydown', function(e) {
             if (e.key === 'F5') return;
             initAudio();
@@ -637,15 +319,17 @@
                     const botName = "Bumbling Bot [AI]";
                     state.players.push({ id: state.setupIndex + 1, name: botName, isBot: true, categories: getDefaultCategories() });
                     
-                    if (state.players.length === 6) {
-                        state.inputMode = 'setup_dice_choice';
-                        window.playGameSound('select');
-                        window.announce("Setup complete. 6 players added. Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
-                    } else {
-                        state.inputMode = 'setup_choice';
-                        window.playGameSound('select');
-                        window.announce(`${botName} added. Press Enter to add another human player, B to add another Bot, or press S to start the game.`);
-                    }
+                    window.playBotAudio('bot_intro', `${botName} added.`, () => {
+                        if (state.players.length === 6) {
+                            state.inputMode = 'setup_dice_choice';
+                            window.playGameSound('select');
+                            window.announce("Setup complete. 6 players added. Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
+                        } else {
+                            state.inputMode = 'setup_choice';
+                            window.playGameSound('select');
+                            window.announce(`Press Enter to add another human player, B to add another Bot, or press S to start the game.`);
+                        }
+                    });
                     return;
                 }
                 return;
@@ -661,15 +345,17 @@
                     const botName = "Bumbling Bot [AI]";
                     state.players.push({ id: state.setupIndex + 1, name: botName, isBot: true, categories: getDefaultCategories() });
                     
-                    if (state.players.length === 6) {
-                        state.inputMode = 'setup_dice_choice';
-                        window.playGameSound('select');
-                        window.announce("Setup complete. 6 players added. Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
-                    } else {
-                        state.inputMode = 'setup_choice';
-                        window.playGameSound('select');
-                        window.announce(`${botName} added. Press Enter to add another human player, B to add another Bot, or press S to start the game.`);
-                    }
+                    window.playBotAudio('bot_intro', `${botName} added.`, () => {
+                        if (state.players.length === 6) {
+                            state.inputMode = 'setup_dice_choice';
+                            window.playGameSound('select');
+                            window.announce("Setup complete. 6 players added. Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
+                        } else {
+                            state.inputMode = 'setup_choice';
+                            window.playGameSound('select');
+                            window.announce(`Press Enter to add another human player, B to add another Bot, or press S to start the game.`);
+                        }
+                    });
                 } else if (e.key.toLowerCase() === 's' && state.players.length > 0) {
                     state.inputMode = 'setup_dice_choice';
                     window.playGameSound('select');

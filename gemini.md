@@ -151,3 +151,36 @@ The game requires `window.playGameSound(action)` to be implemented with the foll
 ## Next Steps for Tomorrow
 * **Feature:** Build the Mobile VoiceOver Touchpad interface so the game can be played via swiping and double-tapping on an iPhone screen.
 * **Suggested Starting Prompt:** `@workspace Please read gemini.md and index.html. We are on v1.4.4. Our next goal is to build an on-screen grid of buttons (Up, Down, Roll, Hold 1-5, Enter) that only appears on mobile screens to allow iOS VoiceOver users to play without a physical keyboard. Please suggest the HTML/CSS structure for this mobile control pad.`
+
+# YAY Dev Log: March 11, 2026 (Part 2)
+
+## Current State
+* **Active Version:** v1.5.1
+* **Files Modified:** index.html
+
+## Changelog (What we accomplished)
+* **The "Joker Rule" Yahtzee Bonus:** Implemented official Yahtzee rules where scoring the Bonus acts as a "Free Action," adding 100 points without consuming a turn or resetting the dice, allowing the player to fulfill the Joker Rule.
+* **The Audio Overhaul:** Integrated complex synthesizer sequences from the v2.0 Audio Laboratory directly into the game engine, including:
+    * `startup` (Sound 119 - Hologram On)
+    * `gameStart` (Sound 37 - Bouncing Confirm)
+    * `roll` (Sound 137 - Signal Lost, timed cascade)
+    * `hold`/`release` (Sounds 72/73 - Directional toggles)
+    * `valueTick` (Sound 63 - Rapid step for value dialing)
+    * `victory` (Sound 149 - Full arpeggio and sustained chord sequence)
+* **Streamlined Verbosity:** Reduced screen reader chatter during high-speed actions (e.g., toggling dice now only reads the value and status, not the index).
+* **Browser Compatibility:** Explicitly released the `F5` key from the global `e.preventDefault()` lock, allowing users to refresh the page normally.
+* **The AI Automation Engine:** Built an asynchronous, self-driving logic loop (`window.handleAITurn`) that allows computer-controlled opponents to play the game natively.
+* **The "Bumbling Bot" Personality:** Added an AI archetype (The Grinder) that heavily weights the Upper Section Bonus, holds dice to build 3-of-a-kinds, and automatically selects the highest-scoring category.
+* **Variable AI Pacing:** Introduced a global `speechRate` variable (Fast: 3s, Medium: 4.5s, Slow: 6s) controlled by the `P` hotkey. This specifically spaces out the AI's `setTimeout` chains to prevent ARIA live region queuing and audio overlap.
+
+## Core Architecture Notes
+* **End Game Simulator (Developer Tool):** Added a new shortcut (`Ctrl + Shift + 3`) that instantly fills the board to Round 13, setting Player 1 for a perfect minimum game (63 upper) and cutting all other players' scores in half, leaving only 'Chance' empty for immediate end-game testing.
+* **AI Integration:** `state.players` objects now support an `isBot: true` boolean.
+* **UI Polish:** The initial start button text was updated to "Press Enter to Begin" and the main container's `aria-label` was branded to "Application: YAY! Accessible Yahtzee". A visual pacing indicator was added to the top right of the DOM.
+
+## Known Issues (What is still broken)
+* The game logic, AI, and keyboard interface are pristine, but the UI is not yet optimized for iOS VoiceOver or Android TalkBack touch controls.
+
+## Next Steps for Tomorrow
+* **Feature:** Build the Mobile VoiceOver Touchpad interface so the game can be played via swiping and double-tapping on a smartphone screen without a physical keyboard.
+* **Suggested Starting Prompt:** `@workspace Please read gemini.md and index.html. We are on v1.5.1. Our next goal is to build an on-screen grid of buttons (Up, Down, Roll, Hold 1-5, Enter, Undo) that only appears on mobile screens to allow touch-based screen reader users to play natively. Please suggest the HTML/CSS structure and touch-event mappings for this mobile control pad.`

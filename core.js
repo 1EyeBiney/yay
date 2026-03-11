@@ -1,0 +1,261 @@
+/* core.js - v2.1.0 */
+        const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
+
+        function getDefaultCategories() {
+            return {
+                1: { name: "Aces", value: null, max: 5, step: 1 },
+                2: { name: "Twos", value: null, max: 10, step: 2 },
+                3: { name: "Threes", value: null, max: 15, step: 3 },
+                4: { name: "Fours", value: null, max: 20, step: 4 },
+                5: { name: "Fives", value: null, max: 25, step: 5 },
+                6: { name: "Sixes", value: null, max: 30, step: 6 },
+                T: { name: "Three of a Kind", value: null, max: 30, step: 1 },
+                F: { name: "Four of a Kind", value: null, max: 30, step: 1 },
+                H: { name: "Full House", value: null, fixed: [0, 25] },
+                S: { name: "Small Straight", value: null, fixed: [0, 30] },
+                L: { name: "Large Straight", value: null, fixed: [0, 40] },
+                Y: { name: "Yahtzee", value: null, fixed: [0, 50] },
+                C: { name: "Chance", value: null, max: 30, step: 1 },
+                B: { name: "Yahtzee Bonus", value: 0, max: 300, step: 100, locked: true } 
+            };
+        }
+
+        window.YAHTZEE_STATE = {
+          players: [],
+          setupIndex: 0,
+          nameIndex: 0,
+          currentPlayerIndex: 0,
+          currentCategory: '1', // Tracks current cursor position
+          inputMode: 'setup',   // 'setup', 'nav', 'score', or 'confirm_reset'
+          gameMode: 'manual',
+          gameOver: false,
+          tempScore: 0,         // Tracks the number being dialed in 'score' mode
+          lastMove: null,
+          history: [],          // Array of last 5 game objects
+          topScores: [],        // Array of top 10 highest game objects (sorted descending)
+          dice: [1, 1, 1, 1, 1],
+          heldDice: [false, false, false, false, false],
+          rollsLeft: 3,
+          speechRate: 'fast'
+        };
+
+        window.calculateScore = function(dice, categoryKey) {
+            const sum = dice.reduce((a, b) => a + b, 0);
+            const counts = {};
+            dice.forEach(d => counts[d] = (counts[d] || 0) + 1);
+            const countValues = Object.values(counts);
+            const hasCount = (n) => countValues.some(c => c >= n);
+
+            switch (categoryKey) {
+                case '1': return (counts[1] || 0) * 1;
+                case '2': return (counts[2] || 0) * 2;
+                case '3': return (counts[3] || 0) * 3;
+                case '4': return (counts[4] || 0) * 4;
+                case '5': return (counts[5] || 0) * 5;
+                case '6': return (counts[6] || 0) * 6;
+                case 'T': return hasCount(3) ? sum : 0;
+                case 'F': return hasCount(4) ? sum : 0;
+                case 'H': return (countValues.includes(3) && countValues.includes(2)) || hasCount(5) ? 25 : 0;
+                case 'S':
+                    const uniqueStr = [...new Set(dice)].sort((a,b)=>a-b).join('');
+                    return (uniqueStr.includes('1234') || uniqueStr.includes('2345') || uniqueStr.includes('3456')) ? 30 : 0;
+                case 'L':
+                    const sortedStr = [...new Set(dice)].sort((a,b)=>a-b).join('');
+                    return (sortedStr === '12345' || sortedStr === '23456') ? 40 : 0;
+                case 'Y': return hasCount(5) ? 50 : 0;
+                case 'C': return sum;
+                case 'B': 
+                    const currentB = window.YAHTZEE_STATE.players[window.YAHTZEE_STATE.currentPlayerIndex].categories['B'].value || 0;
+                    return hasCount(5) ? currentB + 100 : currentB;
+                default: return 0;
+            }
+        };
+
+        window.saveState = function() {
+            localStorage.setItem('YAHTZEE_DATA', JSON.stringify(window.YAHTZEE_STATE));
+        };
+
+        window.checkGameOver = function() {
+            const state = window.YAHTZEE_STATE;
+            const baseKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+            const isOver = state.players.every(p => baseKeys.every(k => p.categories[k].value !== null));
+
+            if (isOver) {
+                state.gameOver = true;
+                const dateStr = new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit'}) + ', ' + new Date().toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'});
+                let highestScore = -1;
+                let winnerName = "";
+                let results = [];
+
+                state.players.forEach(p => {
+                    const pCats = p.categories;
+                    const upperSub = ['1', '2', '3', '4', '5', '6'].reduce((sum, k) => sum + (pCats[k].value || 0), 0);
+                    const bonus = upperSub >= 63 ? 35 : 0;
+                    const lowerTotal = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'].reduce((sum, k) => sum + (pCats[k].value || 0), 0);
+                    const grandTotal = upperSub + bonus + lowerTotal;
+
+                    if (grandTotal > highestScore) { highestScore = grandTotal; winnerName = p.name; }
+
+                    const gameRecord = { name: p.name, score: grandTotal, date: dateStr };
+                    state.history.unshift(gameRecord);
+                    state.topScores.push(gameRecord);
+                    results.push(`${p.name} scored ${grandTotal}`);
+                });
+
+                if (state.history.length > 5) state.history.length = 5;
+                state.topScores.sort((a, b) => b.score - a.score);
+                if (state.topScores.length > 10) state.topScores.length = 10;
+
+                window.playGameSound('victory');
+                state.inputMode = 'nav';
+                window.saveState();
+                window.renderScorecard();
+
+                const resultStr = results.join('. ');
+                window.announce(`Game Over! ${winnerName} wins with ${highestScore} points! ${resultStr}. Press Q to start a new game, or use arrow keys to review the board.`);
+                return true;
+            }
+            return false;
+        };
+
+        window.getTurnAnnouncement = function(playerIndex) {
+            const state = window.YAHTZEE_STATE;
+            const p = state.players[playerIndex];
+            const cats = p.categories;
+            const baseKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+            const filled = baseKeys.filter(k => cats[k].value !== null);
+            const empty = baseKeys.filter(k => cats[k].value === null);
+
+            const upperSub = ['1', '2', '3', '4', '5', '6'].reduce((sum, k) => sum + (cats[k].value || 0), 0);
+            const bonus = upperSub >= 63 ? 35 : 0;
+            const lowerTotal = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'].reduce((sum, k) => sum + (cats[k].value || 0), 0);
+            const grandTotal = upperSub + bonus + lowerTotal;
+
+            let listStr = "";
+            if (filled.length === 0) {
+                listStr = "Board is empty";
+            } else if (filled.length < empty.length) {
+                listStr = filled.map(k => cats[k].name + " filled").join(', ');
+            } else {
+                listStr = empty.map(k => cats[k].name + " empty").join(', ');
+            }
+
+            const actionPrompt = state.gameMode === 'digital' ? "Press D to roll dice." : "Press Enter to set score.";
+            return ` ${p.name}, score ${grandTotal}. ${listStr}. ${actionPrompt}`;
+        };
+
+        window.rollDice = function() {
+            const state = window.YAHTZEE_STATE;
+            if (state.rollsLeft > 0) {
+                state.dice = state.dice.map((d, i) => state.heldDice[i] ? d : Math.ceil(Math.random() * 6));
+                state.rollsLeft--;
+                window.playGameSound('roll');
+
+                if (state.rollsLeft === 0) {
+                    // Auto-Funnel into Placement Mode
+                    state.inputMode = 'placement';
+                    const p = state.players[state.currentPlayerIndex];
+                    const cats = p.categories;
+                    const emptyKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+                    if (cats['Y'].value === 50) emptyKeys.push('B');
+                    const available = emptyKeys.filter(k => cats[k].value === null);
+
+                    // Failsafe: Ensure cursor isn't stuck on a filled or total row
+                    if (!available.includes(state.currentCategory)) {
+                        state.currentCategory = available.length > 0 ? available[0] : '1';
+                    }
+
+                    const calcScore = window.calculateScore(state.dice, state.currentCategory);
+                    window.renderScorecard();
+                    window.announce(`Final roll. ${state.dice.join(', ')}. Placement mode. ${cats[state.currentCategory].name}. Potential score: ${calcScore === 0 ? 'Scratch, 0' : calcScore}.`);
+                } else {
+                    window.announce(`Rolled. ${state.dice.join(', ')}. ${state.rollsLeft} rolls left.`);
+                    window.renderScorecard();
+                }
+            } else {
+                window.playGameSound('limit');
+                window.announce("No rolls left.");
+            }
+        };
+
+        window.handleAITurn = function() {
+            const state = window.YAHTZEE_STATE;
+            if (state.gameOver) return;
+            const p = state.players[state.currentPlayerIndex];
+            if (!p.isBot) return;
+            const delay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 4500 : 6000);
+
+            // Phase 1: Initial Roll
+            if (state.inputMode === 'nav' && state.rollsLeft === 3) {
+                window.playGameSound('valueTick');
+                window.playBotAudio('bot_think', `${p.name} is thinking...`, () => {
+                    window.rollDice();
+                    const delay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 4500 : 6000);
+                    setTimeout(window.handleAITurn, delay);
+                });
+                return;
+            }
+
+            // Phase 2: Evaluate Holds & Re-roll
+            if (state.inputMode === 'nav' && state.rollsLeft > 0) {
+                const cats = p.categories;
+                let counts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+                state.dice.forEach(d => counts[d]++);
+                
+                let target = null;
+                // Find highest number that has an open upper category and we have at least one of
+                for (let i = 6; i >= 1; i--) {
+                    if (cats[i.toString()].value === null && counts[i] > 0) {
+                        target = i;
+                        break;
+                    }
+                }
+
+                if (target) {
+                    state.dice.forEach((d, i) => {
+                        state.heldDice[i] = (d === target);
+                    });
+                    window.renderScorecard();
+                    window.playGameSound('hold');
+                    window.announce(`${p.name} holds ${target}s. Rolling...`);
+                } else {
+                    window.announce(`${p.name} holds nothing. Rolling...`);
+                }
+
+                setTimeout(() => {
+                    window.rollDice();
+                    setTimeout(window.handleAITurn, delay);
+                }, delay);
+                return;
+            }
+
+            // Phase 3: Placement Selection
+            if (state.inputMode === 'placement') {
+                const cats = p.categories;
+                const emptyKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+                if (cats['Y'].value === 50) emptyKeys.push('B');
+                const available = emptyKeys.filter(k => cats[k].value === null || k === 'B');
+
+                let bestCat = available[0];
+                let bestScore = -1;
+
+                available.forEach(k => {
+                    const score = window.calculateScore(state.dice, k);
+                    // Weight: 1.5x priority to Upper Section to simulate "Grinder" personality
+                    let weight = ['1','2','3','4','5','6'].includes(k) ? score * 1.5 : score;
+                    if (weight > bestScore) {
+                        bestScore = weight;
+                        bestCat = k;
+                    }
+                });
+
+                state.currentCategory = bestCat;
+                window.renderScorecard();
+                // Trigger the voice line, THEN dispatch the Enter key
+                window.playGameSound('valueTick');
+                window.playBotAudio('bot_score', `${p.name} selects ${cats[bestCat].name}.`, () => {
+                    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+                    window.dispatchEvent(enterEvent);
+                });
+            }
+        };

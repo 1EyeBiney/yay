@@ -1,0 +1,59 @@
+# --- Media & Large Binaries (Expanded) ---
+# Audio formats
+*.mp3
+!audio/*.mp3
+*.wav
+*.m4a
+*.flac
+*.aac
+*.ogg
+
+# Video formats
+*.mp4
+*.mov
+*.m4v
+*.avi
+*.wmv
+*.mkv
+
+# Archives & Installers
+*.zip
+*.7z
+*.rar
+*.tar
+*.gz
+*.iso
+*.exe
+*.msi
+*.dmg
+
+# --- Targeted "Temp" Rules (Avoids "Template") ---
+# Ignores files ending in .temp or having " temp" with a space
+*.temp
+* temp*
+*_temp*
+temp/
+
+# --- Your Custom Exclusion Rules ---
+z.old/
+backup/
+z.*/
+
+# --- Microsoft Office & PDF (Temp/System files) ---
+# Ignores the "ghost" files Word and Excel create while open.
+~$*.doc*
+~$*.xls*
+~$*.ppt*
+*.tmp
+
+# --- System Junk ---
+Thumbs.db
+desktop.ini
+.DS_Store
+$RECYCLE.BIN/
+
+# --- Web & Programming Junk ---
+node_modules/
+.env
+__pycache__/
+*.log
