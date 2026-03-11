@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v1.4.1</title>
+        <title>YAY! v1.4.2</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -255,8 +255,28 @@
                 state.dice = state.dice.map((d, i) => state.heldDice[i] ? d : Math.ceil(Math.random() * 6));
                 state.rollsLeft--;
                 window.playGameSound('select');
-                window.announce(`Rolled. ${state.dice.join(', ')}. ${state.rollsLeft} rolls left.`);
-                window.renderScorecard();
+
+                if (state.rollsLeft === 0) {
+                    // Auto-Funnel into Placement Mode
+                    state.inputMode = 'placement';
+                    const p = state.players[state.currentPlayerIndex];
+                    const cats = p.categories;
+                    const emptyKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+                    if (cats['Y'].value === 50) emptyKeys.push('B');
+                    const available = emptyKeys.filter(k => cats[k].value === null);
+
+                    // Failsafe: Ensure cursor isn't stuck on a filled or total row
+                    if (!available.includes(state.currentCategory)) {
+                        state.currentCategory = available.length > 0 ? available[0] : '1';
+                    }
+
+                    const calcScore = window.calculateScore(state.dice, state.currentCategory);
+                    window.renderScorecard();
+                    window.announce(`Final roll. ${state.dice.join(', ')}. Placement mode. ${cats[state.currentCategory].name}. Potential score: ${calcScore === 0 ? 'Scratch, 0' : calcScore}.`);
+                } else {
+                    window.announce(`Rolled. ${state.dice.join(', ')}. ${state.rollsLeft} rolls left.`);
+                    window.renderScorecard();
+                }
             } else {
                 window.playGameSound('limit');
                 window.announce("No rolls left.");
@@ -268,7 +288,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.4.1 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.4.2 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -556,10 +576,8 @@
 
                 if (e.key.toLowerCase() === 'i') {
                     e.preventDefault();
-                    const diceStatus = state.dice.map((d, i) => {
-                        return `Die ${i + 1} is ${d} ${state.heldDice[i] ? '(Held)' : ''}`;
-                    }).join('. ');
-                    window.announce(`Rolls left: ${state.rollsLeft}. ${diceStatus}.`);
+                    const diceStatus = state.dice.map((d, i) => state.heldDice[i] ? `held ${d}` : d).join(', ');
+                    window.announce(`Rolls left: ${state.rollsLeft}. Dice: ${diceStatus}.`);
                     return;
                 }
 
@@ -841,7 +859,7 @@
                     window.announce(`${cats[state.currentCategory].name}. Potential score: ${calcScore === 0 ? 'Scratch, 0' : calcScore}.`);
                     window.renderScorecard();
                 } else if (e.key.toLowerCase() === 'i') {
-                    const diceStatus = state.dice.map((d, i) => `Die ${i + 1} is ${d}`).join('. ');
+                    const diceStatus = state.dice.join(', ');
                     window.announce(`Final Dice: ${diceStatus}.`);
                 } else if (e.key === ' ' || e.key.toLowerCase() === 'r') {
                     const calcScore = window.calculateScore(state.dice, state.currentCategory);
@@ -915,23 +933,27 @@
                     state.topScores.sort((a, b) => b.score - a.score);
                     if (state.topScores.length > 10) state.topScores.pop();
 
-                    // Reset Categories
-                    state.players.forEach(p => {
-                        Object.keys(p.categories).forEach(k => {
-                            if (k === 'B') {
-                                p.categories[k].value = 0;
-                            } else {
-                                p.categories[k].value = null;
-                            }
-                        });
-                    });
-                    
+                    // True Hard Reset
+                    state.players = [];
+                    state.setupIndex = 0;
+                    state.nameIndex = 0;
                     state.currentPlayerIndex = 0;
                     state.currentCategory = '1';
-                    state.inputMode = 'nav';
+                    state.gameMode = 'manual';
+                    state.dice = [1, 1, 1, 1, 1];
+                    state.heldDice = [false, false, false, false, false];
+                    state.rollsLeft = 3;
+                    state.inputMode = 'setup';
                     window.saveState();
-                    window.renderScorecard();
-                    window.announce("Game saved and reset.");
+
+                    // Visually clear the board
+                    const existingTable = document.getElementById('scorecard-table');
+                    if (existingTable) existingTable.remove();
+                    const existingDice = document.querySelector('.dice-container');
+                    if (existingDice) existingDice.remove();
+
+                    window.playGameSound('cancel');
+                    window.announce("Game saved. Board reset. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
                 }
             }
         });
