@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v1.3.9.1</title>
+        <title>YAY! v1.4.1</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -195,6 +195,7 @@
           currentPlayerIndex: 0,
           currentCategory: '1', // Tracks current cursor position
           inputMode: 'setup',   // 'setup', 'nav', 'score', or 'confirm_reset'
+          gameMode: 'manual',
           tempScore: 0,         // Tracks the number being dialed in 'score' mode
           lastMove: null,
           history: [],          // Array of last 5 game objects
@@ -202,6 +203,36 @@
           dice: [1, 1, 1, 1, 1],
           heldDice: [false, false, false, false, false],
           rollsLeft: 3
+        };
+
+        window.calculateScore = function(dice, categoryKey) {
+            const sum = dice.reduce((a, b) => a + b, 0);
+            const counts = {};
+            dice.forEach(d => counts[d] = (counts[d] || 0) + 1);
+            const countValues = Object.values(counts);
+            const hasCount = (n) => countValues.some(c => c >= n);
+
+            switch (categoryKey) {
+                case '1': return (counts[1] || 0) * 1;
+                case '2': return (counts[2] || 0) * 2;
+                case '3': return (counts[3] || 0) * 3;
+                case '4': return (counts[4] || 0) * 4;
+                case '5': return (counts[5] || 0) * 5;
+                case '6': return (counts[6] || 0) * 6;
+                case 'T': return hasCount(3) ? sum : 0;
+                case 'F': return hasCount(4) ? sum : 0;
+                case 'H': return (countValues.includes(3) && countValues.includes(2)) || hasCount(5) ? 25 : 0;
+                case 'S':
+                    const uniqueStr = [...new Set(dice)].sort((a,b)=>a-b).join('');
+                    return (uniqueStr.includes('1234') || uniqueStr.includes('2345') || uniqueStr.includes('3456')) ? 30 : 0;
+                case 'L':
+                    const sortedStr = [...new Set(dice)].sort((a,b)=>a-b).join('');
+                    return (sortedStr === '12345' || sortedStr === '23456') ? 40 : 0;
+                case 'Y': return hasCount(5) ? 50 : 0;
+                case 'C': return sum;
+                case 'B': return hasCount(5) ? 100 : 0;
+                default: return 0;
+            }
         };
 
         window.saveState = function() {
@@ -237,7 +268,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.3.9.1 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.4.1 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -260,7 +291,7 @@
                         window.YAHTZEE_STATE.heldDice = [false, false, false, false, false];
                         window.YAHTZEE_STATE.rollsLeft = 3;
                     }
-                    window.announce("Yes! Accessible Yahtzee version 1.3.9.1. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.announce("Yes! Accessible Yahtzee version 1.4.0. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {
                     console.warn("Cleared incompatible save file:", e.message);
                     localStorage.removeItem('YAHTZEE_DATA'); // Clear the bad data
@@ -331,6 +362,9 @@
                         displayValue = cat.value === null ? '--' : cat.value;
                         if (state.inputMode === 'score' && state.currentPlayerIndex === index && key === currentKey) {
                             displayValue = `[ ${state.tempScore} ]`;
+                        } else if (state.inputMode === 'placement' && state.currentPlayerIndex === index && key === currentKey) {
+                            const calcScore = window.calculateScore(state.dice, key);
+                            displayValue = `[ ${calcScore === 0 ? 'Scratch' : calcScore} ]`;
                         }
                     }
                     rowHtml += `<td>${displayValue}</td>`;
@@ -392,12 +426,9 @@
                     state.players.push({ id: state.setupIndex + 1, name: chosenName, categories: getDefaultCategories() });
                     
                     if (state.players.length === 6) {
-                        state.inputMode = 'nav';
-                        state.setupIndex = 0;
-                        window.playGameSound('save');
-                        window.saveState();
-                        window.renderScorecard();
-                        window.announce(`Setup complete. Game started with 6 players. ${state.players[0].name}, your turn. Aces, empty.`);
+                        state.inputMode = 'setup_dice_choice';
+                        window.playGameSound('select');
+                        window.announce("Setup complete. 6 players added. Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
                     } else {
                         state.inputMode = 'setup_choice';
                         window.playGameSound('select');
@@ -414,12 +445,21 @@
                     window.playGameSound('select');
                     window.announce(`Player ${state.setupIndex + 1}, choose name.`);
                 } else if (e.key.toLowerCase() === 's' && state.players.length > 0) {
+                    state.inputMode = 'setup_dice_choice';
+                    window.playGameSound('select');
+                    window.announce("Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
+                }
+                return;
+            } else if (state.inputMode === 'setup_dice_choice') {
+                e.preventDefault();
+                if (e.key.toLowerCase() === 'd' || e.key.toLowerCase() === 'm') {
+                    state.gameMode = e.key.toLowerCase() === 'd' ? 'digital' : 'manual';
                     state.inputMode = 'nav';
                     state.setupIndex = 0;
                     window.playGameSound('save');
                     window.saveState();
                     window.renderScorecard();
-                    window.announce(`Game started with ${state.players.length} players. ${state.players[0].name}, your turn. Aces, empty.`);
+                    window.announce(`Game started. ${state.gameMode} dice mode. ${state.players[0].name}, your turn. Aces, empty.`);
                 }
                 return;
             }
@@ -494,22 +534,24 @@
                 }
 
                 // Dice Controls
-                if (e.key.toLowerCase() === 'd') {
-                    e.preventDefault();
-                    window.rollDice();
-                    return;
-                }
+                if (state.gameMode === 'digital') {
+                    if (e.key.toLowerCase() === 'd') {
+                        e.preventDefault();
+                        window.rollDice();
+                        return;
+                    }
 
-                const holdKeys = ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB'];
-                if (holdKeys.includes(e.code)) {
-                    e.preventDefault();
-                    const index = holdKeys.indexOf(e.code);
-                    state.heldDice[index] = !state.heldDice[index];
-                    window.playGameSound('select');
-                    const status = state.heldDice[index] ? "Held" : "Released";
-                    window.announce(`Die ${index + 1}, ${state.dice[index]}, ${status}.`);
-                    window.renderScorecard();
-                    return;
+                    const holdKeys = ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB'];
+                    if (holdKeys.includes(e.code)) {
+                        e.preventDefault();
+                        const index = holdKeys.indexOf(e.code);
+                        state.heldDice[index] = !state.heldDice[index];
+                        window.playGameSound('select');
+                        const status = state.heldDice[index] ? "Held" : "Released";
+                        window.announce(`Die ${index + 1}, ${state.dice[index]}, ${status}.`);
+                        window.renderScorecard();
+                        return;
+                    }
                 }
 
                 if (e.key.toLowerCase() === 'i') {
@@ -750,10 +792,60 @@
                     }
 
                     window.playGameSound('select');
-                    state.inputMode = 'score';
-                    state.tempScore = 0; // Always start at 0 (Scratch) when entering a fresh category
-                    window.announce(`Set score for ${category.name}. Scratch, 0.`);
+                    if (state.gameMode === 'digital') {
+                        state.inputMode = 'placement';
+                        const calcScore = window.calculateScore(state.dice, state.currentCategory);
+                        window.announce(`Placement mode. ${category.name}. Potential score: ${calcScore === 0 ? 'Scratch, 0' : calcScore}. Use Up and Down arrows to browse empty categories. Press Enter to confirm.`);
+                    } else {
+                        state.inputMode = 'score';
+                        state.tempScore = 0;
+                        window.announce(`Set score for ${category.name}. Scratch, 0.`);
+                    }
                     window.renderScorecard();
+                }
+            } else if (state.inputMode === 'placement') {
+                e.preventDefault();
+                const p = state.players[state.currentPlayerIndex];
+                const cats = p.categories;
+                const emptyKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+                if (cats['Y'].value === 50) emptyKeys.push('B');
+                const available = emptyKeys.filter(k => cats[k].value === null);
+
+                if (e.key === 'Escape') {
+                    state.inputMode = 'nav';
+                    window.playGameSound('cancel');
+                    window.announce("Placement cancelled.");
+                    window.renderScorecard();
+                } else if (e.key === 'Enter') {
+                    const finalScore = window.calculateScore(state.dice, state.currentCategory);
+                    state.lastMove = { playerIndex: state.currentPlayerIndex, categoryKey: state.currentCategory };
+                    cats[state.currentCategory].value = finalScore;
+                    state.rollsLeft = 3;
+                    state.heldDice = [false, false, false, false, false];
+                    state.dice = [1, 1, 1, 1, 1];
+                    window.playGameSound('save');
+                    state.inputMode = 'nav';
+                    window.saveState();
+                    window.renderScorecard();
+                    window.announce(finalScore === 0 ? `Scratched ${cats[state.currentCategory].name}.` : `${finalScore} points saved in ${cats[state.currentCategory].name}.`);
+                } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    if (available.length === 0) return;
+                    let idx = available.indexOf(state.currentCategory);
+                    if (idx === -1) idx = 0;
+                    if (e.key === 'ArrowDown') idx = (idx + 1) % available.length;
+                    else idx = (idx - 1 + available.length) % available.length;
+
+                    state.currentCategory = available[idx];
+                    const calcScore = window.calculateScore(state.dice, state.currentCategory);
+                    window.playGameSound('nav');
+                    window.announce(`${cats[state.currentCategory].name}. Potential score: ${calcScore === 0 ? 'Scratch, 0' : calcScore}.`);
+                    window.renderScorecard();
+                } else if (e.key.toLowerCase() === 'i') {
+                    const diceStatus = state.dice.map((d, i) => `Die ${i + 1} is ${d}`).join('. ');
+                    window.announce(`Final Dice: ${diceStatus}.`);
+                } else if (e.key === ' ' || e.key.toLowerCase() === 'r') {
+                    const calcScore = window.calculateScore(state.dice, state.currentCategory);
+                    window.announce(`${cats[state.currentCategory].name}. Potential score: ${calcScore === 0 ? 'Scratch, 0' : calcScore}.`);
                 }
             } else if (state.inputMode === 'score') {
                 e.preventDefault();
