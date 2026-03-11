@@ -1,4 +1,38 @@
-/* audio.js - v2.2.0 */
+/* audio.js - v2.3.0 */
+
+        // The master limits for the Grab Bag based on the CSV
+        window.AUDIO_COUNTS = {
+            'intro': 3, 'start': 3, 'think': 8, 'hold': 3, 'standard': 6,
+            'excellent': 3, 'botscratch': 3, 'botyahtzee': 2, 'botbonus': 3,
+            'grief': 4, 'humanyahtzee': 2, 'humanscratch': 3, 'botlead': 3,
+            'behind': 3, 'passed': 3, 'passes': 3, 'wins': 3, 'loses': 4
+        };
+   
+        // The Shuffle Bag logic
+        window.getGrabBagAudio = function(botAbbr, actionType) {
+            const state = window.YAHTZEE_STATE;
+            if (!state.audioBags) state.audioBags = {};
+            const bagKey = `${botAbbr}_${actionType}`;
+   
+            // Refill bag if empty or doesn't exist
+            if (!state.audioBags[bagKey] || state.audioBags[bagKey].length === 0) {
+                const maxCount = window.AUDIO_COUNTS[actionType] || 3;
+                let newBag = [];
+                for (let i = 1; i <= maxCount; i++) newBag.push(i);
+   
+                // Fisher-Yates Shuffle
+                for (let i = newBag.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [newBag[i], newBag[j]] = [newBag[j], newBag[i]];
+                }
+                state.audioBags[bagKey] = newBag;
+            }
+   
+            // Pull from bag
+            const selectedNum = state.audioBags[bagKey].pop();
+            if (window.saveState) window.saveState(); // Persist the bag state
+            return `audio/${actionType}_${selectedNum}${botAbbr}.mp3`;
+        };
         window.audioCtx = null;
         function initAudio() { 
             if(!window.audioCtx) { window.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 

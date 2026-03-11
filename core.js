@@ -1,4 +1,4 @@
-/* core.js - v2.2.0 */
+/* core.js - v2.3.1 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -49,7 +49,8 @@
           heldDice: [false, false, false, false, false],
           rollsLeft: 3,
           speechRate: 'fast',
-          aiVoiceMuted: false
+          aiVoiceMuted: false,
+          audioBags: {}
         };
 
         window.calculateScore = function(dice, categoryKey) {
@@ -201,11 +202,12 @@
             // Phase 1: Initial Roll
             if (state.inputMode === 'nav' && state.rollsLeft === 3) {
                 window.playGameSound('valueTick');
-                const randNum = Math.floor(Math.random() * 3) + 1;
-                const thinkKey = `audio/think_${randNum}${p.abbr || 'bb'}.mp3`;
+                const thinkKey = window.getGrabBagAudio(p.abbr || 'bb', 'think');
                 window.playBotAudio(thinkKey, `${p.name} is thinking...`, () => {
                     window.rollDice();
-                    const delay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 4500 : 6000);
+                    const baseDelay = state.speechRate === 'fast' ? 2000 : (state.speechRate === 'medium' ? 3500 : 5000);
+                    const randomVariance = Math.floor(Math.random() * 2000) - 1000; // +/- 1 second
+                    const delay = baseDelay + randomVariance;
                     setTimeout(window.handleAITurn, delay);
                 });
                 return;
@@ -283,18 +285,19 @@
                 
                 // Calculate true score for audio context
                 const trueScore = window.calculateScore(state.dice, bestCat);
-                let audioPrefix = 'score_';
-                if (trueScore >= 25) audioPrefix = 'score_good_';
-                else if (trueScore === 0) audioPrefix = 'scratch_';
+                let audioPrefix = 'standard';
+                if (bestCat === 'Y' && trueScore === 50) audioPrefix = 'botyahtzee';
+                else if (trueScore === 0) audioPrefix = 'botscratch';
+                else if (trueScore >= 25) audioPrefix = 'excellent';
                 
-                const randNum = Math.floor(Math.random() * 3) + 1;
-                const scoreKey = `audio/${audioPrefix}${randNum}${abbr}.mp3`;
-
+                const scoreKey = window.getGrabBagAudio(abbr, audioPrefix);
                 window.playGameSound('valueTick');
                 const scoreStr = trueScore === 0 ? 'a scratch' : `${trueScore} points`;
                 window.announce(`${p.name} selects ${cats[bestCat].name} for ${scoreStr}.`);
                 
-                const delay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 4500 : 6000);
+                const baseDelay = state.speechRate === 'fast' ? 2000 : (state.speechRate === 'medium' ? 3500 : 5000);
+                const randomVariance = Math.floor(Math.random() * 2000) - 1000; // +/- 1 second
+                const delay = baseDelay + randomVariance;
                 setTimeout(() => {
                     window.playBotAudio(scoreKey, null, () => {
                         const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
