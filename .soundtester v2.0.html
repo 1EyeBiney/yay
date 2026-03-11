@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bunker Audio Laboratory v2.0 - 200 Sounds</title>
+    <style>
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { background-color: #121212; color: #e0e0e0; font-family: sans-serif; max-width: 960px; margin: 0 auto; padding: 20px 20px 80px; }
+        h1 { text-align: center; color: #4CAF50; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #888; margin-bottom: 30px; }
+        nav { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 15px 20px; margin-bottom: 30px; position: sticky; top: 0; z-index: 100; }
+        nav h2 { margin: 0 0 10px; font-size: 0.9rem; color: #4CAF50; text-transform: uppercase; letter-spacing: 1px; }
+        nav .nav-links { display: flex; flex-wrap: wrap; gap: 6px; }
+        nav a { color: #81C784; text-decoration: none; font-size: 0.82rem; padding: 4px 10px; background: #222; border-radius: 4px; border: 1px solid #333; white-space: nowrap; }
+        nav a:hover { background: #2a3a2a; border-color: #4CAF50; }
+        .stop-btn { background: #441111 !important; color: #ff5252 !important; border-color: #ff5252 !important; font-weight: bold; cursor: pointer; }
+        .stop-btn:hover { background: #661111 !important; }
+        .section-header { border-bottom: 2px solid #4CAF50; padding-bottom: 5px; margin-top: 50px; color: #4CAF50; }
+        .section-note { color: #777; font-size: 0.85rem; margin-top: -5px; margin-bottom: 10px; }
+        .button-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 40px; }
+        button { padding: 10px 12px; font-size: 0.95rem; cursor: pointer; background: #222; color: #4CAF50; border: 1px solid #4CAF50; border-radius: 6px; text-align: left; transition: background 0.15s; }
+        button:hover { background: #1a2e1a; }
+        button:focus { background: #4CAF50; color: #000; outline: none; font-weight: bold; }
+        .desc { color: #aaa; font-size: 0.82rem; display: block; margin-top: 2px; }
+        button:focus .desc { color: #222; }
+        .new-tag { color: #FF9800; font-size: 0.75rem; font-weight: bold; margin-left: 6px; }
+        button:focus .new-tag { color: #222; }
+        .long-tag { color: #CE93D8; font-size: 0.75rem; font-weight: bold; margin-left: 6px; }
+        button:focus .long-tag { color: #222; }
+        #back-top { position: fixed; bottom: 20px; right: 20px; background: #4CAF50; color: #000; border: none; padding: 10px 14px; border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: none; z-index: 100; }
+    </style>
+</head>
+<body>
+
+<h1>&#x1f50a; Bunker Audio Laboratory v2.0</h1>
+<p class="subtitle">200 sound options &bull; Existing 1-68 preserved &bull; Click any button to preview</p>
+
+<nav>
+    <h2>Quick Navigation</h2>
+    <div class="nav-links">
+        <a href="#sec-a">A. UI &amp; Navigation</a>
+        <a href="#sec-b">B. Actions &amp; Construction</a>
+        <a href="#sec-c">C. Alerts &amp; Warnings</a>
+        <a href="#sec-d">D. Combat &amp; Impact</a>
+        <a href="#sec-e">E. Ambient &amp; Atmosphere</a>
+        <a href="#sec-f">F. Sci-Fi &amp; Technology</a>
+        <a href="#sec-g">G. Musical &amp; Tonal</a>
+        <a href="#sec-h">H. Negative &amp; Error (2-3s)</a>
+        <a href="#sec-i">I. Victory &amp; Triumph (3-5s+)</a>
+        <a href="#sec-j">J. Game Over &amp; Defeat (3-5s+)</a>
+        <a href="#sec-k">K. Misc &amp; Inspiration</a>
+        <a class="stop-btn" href="javascript:void(0)" onclick="stopAll()">&#x25A0; STOP ALL</a>
+    </div>
+</nav>
+
+<!-- ============================================================ -->
+<!-- SECTION A: UI & NAVIGATION -->
+<!-- ============================================================ -->
+<h2 id="sec-a" class="section-header">A. UI &amp; Navigation</h2>
+<p class="section-note">Interface clicks, movement feedback, menus, basic interaction sounds.</p>
+<div class="button-group">
+    <button onclick="playGame('move')">1. Grid Move <span class="desc">Standard navigation (Sine 400Hz).</span></button>
+    <button onclick="playGame('wrap')">2. Grid Wrap-Around <span class="desc">Crossing floor boundaries.</span></button>
+    <button onclick="playGame('floorUp')">3. Floor Up <span class="desc">PageUp navigation.</span></button>
+    <button onclick="playGame('floorDown')">4. Floor Down <span class="desc">PageDown navigation.</span></button>
+    <button onclick="playGame('menu')">5. Menu Scroll <span class="desc">Up/Down arrows.</span></button>
+    <button onclick="playTone('sine', 600, null, 0.1, 0.3)">9. Clean Blip <span class="desc">Simple sine blip.</span></button>
+    <button onclick="playTone('sine', 1200, null, 0.05, 0.2)">10. High Tech Tick <span class="desc">Fast high-pitched tick.</span></button>
+    <button onclick="playTone('square', 600, 100, 0.05, 0.05)">14. Typewriter Clack <span class="desc">Sharp square drop.</span></button>
+    <button onclick="playGame('menuSelect')">23. Menu Activation <span class="desc">Salvage or normal menu items.</span></button>
+    <button onclick="playGame('closeMenu')">33. Close Menus <span class="desc">Escape key.</span></button>
+    <button onclick="playTone('square', 1000, null, 0.02, 0.05)">61. Pixel Blink <span class="desc">Shortest possible square blip.</span></button>
+    <button onclick="playChord([1000, 1200, 1400], 0.05, 0.2)">64. Tech Click <span class="desc">High-frequency chord click.</span></button>
+    <button onclick="playTone('sine', 500, null, 0.08, 0.2)">69. Soft Confirm <span class="new-tag">NEW</span><span class="desc">Gentle acknowledgment blip.</span></button>
+    <button onclick="playTone('triangle', 700, 900, 0.06, 0.15)">70. Tab Switch <span class="new-tag">NEW</span><span class="desc">Quick triangle rise for tab changes.</span></button>
+    <button onclick="playTone('square', 1500, null, 0.02, 0.06)">71. Scroll Tick <span class="new-tag">NEW</span><span class="desc">Ultra-short scroll feedback.</span></button>
+    <button onclick="playTone('sine', 400, 700, 0.1, 0.2)">72. Toggle On <span class="new-tag">NEW</span><span class="desc">Rising tone, something enabled.</span></button>
+    <button onclick="playTone('sine', 700, 400, 0.1, 0.2)">73. Toggle Off <span class="new-tag">NEW</span><span class="desc">Falling tone, something disabled.</span></button>
+    <button onclick="playTone('sine', 900, null, 0.05, 0.08)">74. Hover Glow <span class="new-tag">NEW</span><span class="desc">Very soft hover feedback.</span></button>
+    <button onclick="playTone('sawtooth', 300, 500, 0.12, 0.1)">75. Drag Start <span class="new-tag">NEW</span><span class="desc">Grab / pickup feel.</span></button>
+    <button onclick="playTone('sine', 500, 350, 0.1, 0.15)">76. Drop Place <span class="new-tag">NEW</span><span class="desc">Release / set-down feel.</span></button>
+    <button onclick="playTone('sine', 1400, null, 0.03, 0.12)">77. Tooltip Pop <span class="new-tag">NEW</span><span class="desc">Tiny info bubble appearing.</span></button>
+    <button onclick="playTone('square', 950, null, 0.03, 0.08)">78. Breadcrumb Click <span class="new-tag">NEW</span><span class="desc">Small navigation step.</span></button>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION B: ACTIONS & CONSTRUCTION -->
+<!-- ============================================================ -->
+<h2 id="sec-b" class="section-header">B. Actions &amp; Construction</h2>
+<p class="section-note">Building, digging, power management, doors, turns, projects.</p>
+<div class="button-group">
+    <button onclick="playGame('turn')">8. End Turn <span class="desc">Q Key (Sine bass drop).</span></button>
+    <button onclick="playGame('success')">15. Project Completion <span class="desc">Project finishes.</span></button>
+    <button onclick="playGame('powerUp')">17. Power Up <span class="desc">Turning module ONLINE.</span></button>
+    <button onclick="playGame('powerDown')">18. Power Down <span class="desc">Turning module OFFLINE.</span></button>
+    <button onclick="playTone('triangle', 100, 200, 0.3, 0.3)">19. Heavy Door Open <span class="desc">Low triangle rise.</span></button>
+    <button onclick="playTone('triangle', 200, 100, 0.3, 0.3)">20. Heavy Door Close <span class="desc">Low triangle fall.</span></button>
+    <button onclick="playGame('digStart')">28. Start Excavation <span class="desc">Beginning a dig project.</span></button>
+    <button onclick="playGame('unlockBuild')">31. Build / Research / Designate <span class="desc">Starting construction.</span></button>
+    <button onclick="playGame('reports')">38. Reports (R, W, I, H, O) <span class="desc">Diagnostic data.</span></button>
+    <button onclick="playSequence(['square','sine'], [600, 200], 0.2, 0.2)">54. System Locked <span class="desc">Harsh start, soft finish.</span></button>
+    <button onclick="playSequence(['sine','square'], [200, 600], 0.2, 0.2)">55. System Unlocked <span class="desc">Soft start, harsh finish.</span></button>
+    <button onclick="playNoise(0.08, 0.15, 3000, 3); setTimeout(function(){playTone('sine',2000,500,0.12,0.15)},60)">79. Weld Spark <span class="new-tag">NEW</span><span class="desc">Noise crack then descending tone.</span></button>
+    <button onclick="playSwell('sine', 200, 400, 1.0, 0.2)">80. Pressurize <span class="new-tag">NEW</span><span class="desc">Slow rising hiss / hum.</span></button>
+    <button onclick="playSwell('sine', 400, 200, 1.0, 0.2)">81. Depressurize <span class="new-tag">NEW</span><span class="desc">Slow falling hum.</span></button>
+    <button onclick="playTone('triangle', 300, 80, 0.4, 0.25)">82. Hatch Seal <span class="new-tag">NEW</span><span class="desc">Heavy mechanical close.</span></button>
+    <button onclick="playEcho('sine', 400, 800, 0.25, 0.15, 0.12)">83. Coolant Flow <span class="new-tag">NEW</span><span class="desc">Liquid bubbling movement.</span></button>
+    <button onclick="playSweep(100, 2500, 2500, 0.8)">84. Capacitor Charge <span class="new-tag">NEW</span><span class="desc">Rising energy buildup.</span></button>
+    <button onclick="playSequence(['sine','sine','sine','sine'], [300,600,900,1200], 0.08, 0.2)">85. Energy Transfer <span class="new-tag">NEW</span><span class="desc">Quick ascending pipeline.</span></button>
+    <button onclick="playChord([300, 400, 500], 0.15, 0.3)">86. Module Lock <span class="new-tag">NEW</span><span class="desc">Solid chord confirming attachment.</span></button>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION C: ALERTS & WARNINGS -->
+<!-- ============================================================ -->
+<h2 id="sec-c" class="section-header">C. Alerts &amp; Warnings</h2>
+<p class="section-note">Hazards, alarms, system warnings, proximity alerts.</p>
+<div class="button-group">
+    <button onclick="playSequence(['sine','sine'], [800, 800], 0.08, 0.2)">16. Alert Double-Beep <span class="desc">Two quick beeps.</span></button>
+    <button onclick="playGame('lifeboat')">24. Lifeboat Event <span class="desc">Incoming supply pod.</span></button>
+    <button onclick="playGame('hazard')">25. Meteor / Worm Strike <span class="desc">Hostile events.</span></button>
+    <button onclick="playTone('sine', 1000, 100, 0.5, 0.3)">29. Power Failure <span class="desc">Descending emergency tone.</span></button>
+    <button onclick="playSequence(['square','square','square'], [50, 60, 50], 0.2, 0.1)">67. Warning Growl <span class="desc">Low aggressive square modulation.</span></button>
+    <button onclick="playSequence(['sine','sine','sine'], [900,900,900], 0.12, 0.25)">87. Proximity Alert <span class="new-tag">NEW</span><span class="desc">Triple beep, something nearby.</span></button>
+    <button onclick="playSweep(400, 900, 400, 1.2)">88. Hull Breach Siren <span class="new-tag">NEW</span><span class="desc">Rising and falling sweep alarm.</span></button>
+    <button onclick="playSwell('sine', 180, 200, 1.0, 0.2)">89. Low Oxygen <span class="new-tag">NEW</span><span class="desc">Slow labored pulse at low pitch.</span></button>
+    <button onclick="playEcho('square', 300, 50, 0.5, 0.25, 0.2)">90. Containment Fail <span class="new-tag">NEW</span><span class="desc">Square wave collapsing with echo.</span></button>
+    <button onclick="playEcho('sine', 1800, 1800, 0.04, 0.15, 0.08)">91. Radiation Ping <span class="new-tag">NEW</span><span class="desc">Sharp high ping with fast echo.</span></button>
+    <button onclick="playSweep(200, 1800, 200, 0.8)">92. Overload Warning <span class="new-tag">NEW</span><span class="desc">V-shaped frequency alarm sweep.</span></button>
+    <button onclick="playSequence(['square','square','square','square'], [1000,800,1000,800], 0.08, 0.2)">93. Critical Systems <span class="new-tag">NEW</span><span class="desc">Alternating rapid alarm tones.</span></button>
+    <button onclick="playChord([600, 900], 0.3, 0.3); setTimeout(function(){playTone('sine',1200,null,0.1,0.3)},350)">94. Intruder Detect <span class="new-tag">NEW</span><span class="desc">Chord hit then sharp beep.</span></button>
+    <button onclick="playTone('sine', 900, 100, 0.8, 0.25)">95. Pressure Drop <span class="new-tag">NEW</span><span class="desc">Long descending emergency whine.</span></button>
+    <button onclick="playSequence(['square','square','square','square'], [1000,500,1000,500], 0.15, 0.25)">96. Fire Alarm <span class="new-tag">NEW</span><span class="desc">Classic alternating two-tone alarm.</span></button>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION D: COMBAT & IMPACT -->
+<!-- ============================================================ -->
+<h2 id="sec-d" class="section-header">D. Combat &amp; Impact</h2>
+<p class="section-note">Weapons, explosions, shields, defensive systems, hits.</p>
+<div class="button-group">
+    <button onclick="playTone('square', 800, 50, 0.3, 0.05)">27. Retro Laser <span class="desc">Square wave laser shot.</span></button>
+    <button onclick="playEcho('sawtooth', 800, 100, 0.2, 0.05, 0.1)">35. Zap <span class="desc">Fast sawtooth energy zap.</span></button>
+    <button onclick="playTone('square', 50, 10, 0.8, 0.2)">43. Seismic Thud <span class="desc">Extreme low drop. Feel the bass.</span></button>
+    <button onclick="playEcho('square', 400, 10, 0.1, 0.1, 0.05)">49. Machine Gun Fire <span class="desc">Rapid square bursts.</span></button>
+    <button onclick="playSweep(800, 2000, 200, 0.6)">50. Deflector Shield <span class="desc">Rising then crashing frequency.</span></button>
+    <button onclick="playTone('sine', 1000, 10, 0.1, 0.3)">52. Small Impact <span class="desc">Short sharp drop.</span></button>
+    <button onclick="playEcho('sine', 100, 10, 0.5, 0.4, 0.2)">53. Heavy Blast <span class="desc">Deep bass impact with echo.</span></button>
+    <button onclick="playEcho('sawtooth', 1200, 100, 0.15, 0.2, 0.06)">97. Plasma Bolt <span class="new-tag">NEW</span><span class="desc">Hot sawtooth burst with tail.</span></button>
+    <button onclick="playNoise(0.08, 0.15, null, null); playChord([200,400,800], 0.2, 0.2)">98. Shield Hit <span class="new-tag">NEW</span><span class="desc">Noise crack + wide chord impact.</span></button>
+    <button onclick="playEcho('sine', 2500, 800, 0.06, 0.2, 0.04)">99. Ricochet <span class="new-tag">NEW</span><span class="desc">High bouncing descend.</span></button>
+    <button onclick="playSweep(80, 3000, 3000, 1.2)">100. Charge Weapon <span class="new-tag">NEW</span><span class="desc">Long rising buildup to full energy.</span></button>
+    <button onclick="playNoise(0.05, 0.2, null, null); setTimeout(function(){playTone('sawtooth',50,10,0.3,0.2)},40)">101. Railgun Fire <span class="new-tag">NEW</span><span class="desc">Crack then deep bass punch.</span></button>
+    <button onclick="playSequence(['sine','sine','sine','sine','sine'], [1200,1200,1200,1200,1200], 0.04, 0.2)">102. Missile Lock <span class="new-tag">NEW</span><span class="desc">Rapid tracking beeps.</span></button>
+    <button onclick="playNoise(0.25, 0.15, null, null); playTone('sine',60,20,0.4,0.2)">103. Explosion Small <span class="new-tag">NEW</span><span class="desc">Short noise burst + low rumble.</span></button>
+    <button onclick="playNoise(0.6, 0.2, null, null); playTone('sine',40,10,0.8,0.25)">104. Explosion Large <span class="new-tag">NEW</span><span class="desc">Big noise blast + deep sub rumble.</span></button>
+    <button onclick="playSweep(200, 2000, 1200, 0.5)">105. Shield Activate <span class="new-tag">NEW</span><span class="desc">Fast rising shield engagement.</span></button>
+    <button onclick="playSweep(1200, 200, 50, 0.6)">106. Shield Down <span class="new-tag">NEW</span><span class="desc">Descending shield failure.</span></button>
+    <button onclick="playNoise(0.04, 0.2, null, null); playTone('square',250,50,0.1,0.15)">107. Melee Strike <span class="new-tag">NEW</span><span class="desc">Sharp noise hit + low square thud.</span></button>
+    <button onclick="playTone('sawtooth', 800, 150, 0.8, 0.12)">108. Energy Drain <span class="new-tag">NEW</span><span class="desc">Slow sawtooth siphon descend.</span></button>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION E: AMBIENT & ATMOSPHERE -->
+<!-- ============================================================ -->
+<h2 id="sec-e" class="section-header">E. Ambient &amp; Atmosphere</h2>
+<p class="section-note">Drones, environmental hums, mood-setting background textures.</p>
+<div class="button-group">
+    <button onclick="playTone('sine', 150, null, 0.15, 0.4)">11. Low Boop <span class="desc">Deep sine pulse.</span></button>
+    <button onclick="playTone('sine', 60, null, 0.5, 0.5)">22. Sub-Bass Pulse <span class="desc">Felt more than heard.</span></button>
+    <button onclick="playChord([200, 203, 207], 1.0, 0.3)">32. Eerie Drone <span class="desc">Close-frequency beating.</span></button>
+    <button onclick="playChord([55, 110], 2.0, 0.4)">39. Deep Reactor Hum <span class="desc">Very low steady drone.</span></button>
+    <button onclick="playSweep(100, 110, 100, 1.5)">41. Structural Groan <span class="desc">Slow low sawtooth wobble.</span></button>
+    <button onclick="playSequence(['sine','triangle','sine'], [200, 400, 200], 0.3, 0.2)">42. Breathing Rhythm <span class="desc">Life support pulse.</span></button>
+    <button onclick="playTone('sawtooth', 440, 445, 1.0, 0.1)">47. Radio Interference <span class="desc">Dissonant sawtooth beating.</span></button>
+    <button onclick="playChord([300, 310, 320], 0.8, 0.2)">56. Engine Idle <span class="desc">Rough textured mid-drone.</span></button>
+    <button onclick="playSweep(50, 150, 50, 2.0)">58. The Abyss <span class="desc">Slow deep breathing cycle.</span></button>
+    <button onclick="playNoise(1.8, 0.06, 400, 2)">109. Wind Howl <span class="new-tag">NEW</span><span class="desc">Bandpass-filtered noise like distant wind.</span></button>
+    <button onclick="playNoise(1.2, 0.12, 80, 1); playTone('sine',45,35,1.5,0.15)">110. Distant Thunder <span class="new-tag">NEW</span><span class="desc">Low rumble with sub-bass.</span></button>
+    <button onclick="playEcho('sine', 1800, 1800, 0.015, 0.12, 0.35)">111. Cave Drip <span class="new-tag">NEW</span><span class="desc">Tiny ping in vast reverb space.</span></button>
+    <button onclick="playNoise(1.0, 0.05, 3500, 5)">112. Frozen Static <span class="new-tag">NEW</span><span class="desc">Narrow high-band ice crackle.</span></button>
+    <button onclick="playChord([59, 60, 61], 2.0, 0.25)">113. Magnetic Hum <span class="new-tag">NEW</span><span class="desc">Close frequencies creating slow beat.</span></button>
+    <button onclick="playNoise(2.0, 0.04, 900, 0.5)">114. Solar Wind <span class="new-tag">NEW</span><span class="desc">Wide-band gentle noise wash.</span></button>
+    <button onclick="playSwell('sine', 50, 55, 3.0, 0.18)">115. Deep Space <span class="new-tag">NEW</span><span class="desc">Barely shifting sub-bass swell.</span></button>
+    <button onclick="playSwell('sine', 80, 80, 1.5, 0.2)">116. Reactor Pulse <span class="new-tag">NEW</span><span class="desc">Fade-in sustain fade-out throb.</span></button>
+    <button onclick="playNoise(1.5, 0.04, 250, 1)">117. Ventilation <span class="new-tag">NEW</span><span class="desc">Low air movement noise.</span></button>
+    <button onclick="playSequence(['sine','sine','sine','sine'], [100,120,100,80], 0.4, 0.12)">118. Bio-Organic Pulse <span class="new-tag">NEW</span><span class="desc">Slow alien heartbeat rhythm.</span></button>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION F: SCI-FI & TECHNOLOGY -->
+<!-- ============================================================ -->
+<h2 id="sec-f" class="section-header">F. Sci-Fi &amp; Technology</h2>
+<p class="section-note">Data transmission, scanners, comms, mechanical, futuristic FX.</p>
+<div class="button-group">
+    <button onclick="playTone('sawtooth', 150, null, 0.3, 0.1)">12. Harsh Buzz <span class="desc">Raw sawtooth burst.</span></button>
+    <button onclick="playGlitch()">26. Data Glitch <span class="desc">Random square bursts.</span></button>
+    <button onclick="playEcho('sawtooth', 50, 300, 0.4, 0.1, 0.2)">30. Machine Rev <span class="desc">Sawtooth engine with echo.</span></button>
+    <button onclick="playSequence(['sine','sine','sine'], [600, 600, 600], 0.1, 0.3)">34. Comm Link <span class="desc">Triple beep communication.</span></button>
+    <button onclick="playEcho('sine', 2000, 1500, 0.05, 0.1, 0.05)">40. Digital Dewdrop <span class="desc">Ultra-fast high echo.</span></button>
+    <button onclick="playSequence(['sine','sine'], [100, 1200], 0.2, 0.3)">48. Telemetry Burst <span class="desc">Low-to-high digital handshake.</span></button>
+    <button onclick="playEcho('sawtooth', 200, 200, 0.05, 0.2, 0.1)">51. Metal Ratchet <span class="desc">Mechanical clicking.</span></button>
+    <button onclick="playEcho('sine', 5000, 100, 0.1, 0.2, 0.1)">57. Spark <span class="desc">Ultra-high electrical pop.</span></button>
+    <button onclick="playGlitchCustom(0.01, 2000)">59. Nano-Glitch <span class="desc">Micro-bursts of high noise.</span></button>
+    <button onclick="playGlitchCustom(0.1, 100)">60. Low-Fi Scrape <span class="desc">Low digital artifacts.</span></button>
+    <button onclick="playTone('sawtooth', 10, 1000, 0.5, 0.1)">65. Ripping Reality <span class="desc">Sawtooth from sub-audible.</span></button>
+    <button onclick="playEcho('sine', 300, 300, 0.02, 0.4, 0.02)">66. Reverb Room <span class="desc">Tiny sound, metallic space.</span></button>
+    <button onclick="playSequence(['sine','sine','sine','sine'], [800,1000,1200,1600], 0.04, 0.18)">119. Hologram On <span class="new-tag">NEW</span><span class="desc">Fast ascending sparkle arpeggio.</span></button>
+    <button onclick="playSequence(['sine','sine','sine','sine'], [1600,1200,1000,800], 0.04, 0.18)">120. Hologram Off <span class="new-tag">NEW</span><span class="desc">Fast descending dismiss arpeggio.</span></button>
+    <button onclick="playSweep(200, 4000, 200, 1.0)">121. Scanner Sweep <span class="new-tag">NEW</span><span class="desc">Wide frequency radar sweep.</span></button>
+    <button onclick="playSequence(['sine','sine','sine','sine','sine','sine'], [1200,1000,800,600,400,200], 0.06, 0.15)">122. Data Download <span class="new-tag">NEW</span><span class="desc">Rapid descending data stream.</span></button>
+    <button onclick="playSequence(['sine','sine','sine','sine','sine','sine'], [200,400,600,800,1000,1200], 0.06, 0.15)">123. Data Upload <span class="new-tag">NEW</span><span class="desc">Rapid ascending data stream.</span></button>
+    <button onclick="playGlitchCustom(0.015, 3500)">124. Encryption <span class="new-tag">NEW</span><span class="desc">Rapid high-pitched data scramble.</span></button>
+    <button onclick="playGlitchCustom(0.025, 1800)">125. Decryption <span class="new-tag">NEW</span><span class="desc">Slower mid-range data unscramble.</span></button>
+    <button onclick="playSequence(['sine','sine','sine','sine','sine'], [400,600,400,800,400], 0.04, 0.15)">126. AI Voice Blip <span class="new-tag">NEW</span><span class="desc">Synthetic speech-like pattern.</span></button>
+    <button onclick="playEcho('sine', 500, 1500, 0.15, 0.15, 0.08); setTimeout(function(){playEcho('sine',1500,500,0.15,0.12,0.08)},200)">127. Quantum Flux <span class="new-tag">NEW</span><span class="desc">Wobbly up-down uncertainty tone.</span></button>
+    <button onclick="playSwell('sawtooth', 200, 100, 1.5, 0.1)">128. Tractor Beam <span class="new-tag">NEW</span><span class="desc">Steady pulling sawtooth drone.</span></button>
+    <button onclick="playSweep(4000, 200, 200, 0.4)">129. Teleport In <span class="new-tag">NEW</span><span class="desc">Fast descend — arrival.</span></button>
+    <button onclick="playSweep(200, 4000, 4000, 0.4)">130. Teleport Out <span class="new-tag">NEW</span><span class="desc">Fast ascend — departure.</span></button>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION G: MUSICAL & TONAL -->
+<!-- ============================================================ -->
+<h2 id="sec-g" class="section-header">G. Musical &amp; Tonal</h2>
+<p class="section-note">Chords, stings, melodic elements, tonal textures.</p>
+<div class="button-group">
+    <button onclick="playTone('triangle', 250, 150, 0.2, 0.3)">13. Deny Tone <span class="desc">Descending triangle denial.</span></button>
+    <button onclick="playChord([400, 600], 0.3, 0.3)">21. Soft Notify <span class="desc">Gentle two-note chord.</span></button>
+    <button onclick="playChord([150, 300, 600, 1200], 0.4, 0.2)">36. Massive Synth Hit <span class="desc">Octave-stacked power chord.</span></button>
+    <button onclick="playEcho('sine', 600, 800, 0.2, 0.3, 0.2)">37. Bouncing Confirm <span class="desc">Rising sine with bouncy echo.</span></button>
+    <button onclick="playEcho('triangle', 1200, 1200, 0.1, 0.2, 0.2)">44. Crystal Ping <span class="desc">Pure triangle with spaced echo.</span></button>
+    <button onclick="playChord([440, 554, 659, 880], 0.6, 0.2)">45. Major Triumph <span class="desc">Full A-Major chord.</span></button>
+    <button onclick="playChord([440, 523, 659, 880], 0.6, 0.2)">46. Minor Foreboding <span class="desc">Full A-Minor chord.</span></button>
+    <button onclick="playEcho('triangle', 400, 800, 0.1, 0.2, 0.05)">62. Springy Boing <span class="desc">Tonal bounce effect.</span></button>
+    <button onclick="playSequence(['sine','sine','sine'], [100, 200, 300], 0.05, 0.3)">63. Rapid Step <span class="desc">Quick mechanical movement.</span></button>
+    <button onclick="playSweep(2000, 100, 2000, 0.3)">68. Alien Chirp <span class="desc">Fast V-shaped sweep.</span></button>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION H: NEGATIVE & ERROR TONES (2-3 sec) -->
+<!-- ============================================================ -->
+<h2 id="sec-h" class="section-header">H. Negative &amp; Error Tones (2-3 sec)</h2>
+<p class="section-note">Failures, losses, damage feedback, denial. Each runs 2-3 seconds.</p>
+<div class="button-group">
+    <button onclick="playLong(131)">131. System Failure <span class="long-tag">2.5s</span><span class="desc">Descending minor progression — total breakdown.</span></button>
+    <button onclick="playLong(132)">132. Access Denied <span class="long-tag">2s</span><span class="desc">Two harsh buzzer chords.</span></button>
+    <button onclick="playLong(133)">133. Corruption Detected <span class="long-tag">2.5s</span><span class="desc">Glitch noise with sinking tone.</span></button>
+    <button onclick="playLong(134)">134. Morale Drop <span class="long-tag">3s</span><span class="desc">Slow mournful descending sine.</span></button>
+    <button onclick="playLong(135)">135. Structure Collapse <span class="long-tag">2.5s</span><span class="desc">Impact noise then low rumble decay.</span></button>
+    <button onclick="playLong(136)">136. Power Drain <span class="long-tag">2.5s</span><span class="desc">Descending arpeggio fading to silence.</span></button>
+    <button onclick="playLong(137)">137. Signal Lost <span class="long-tag">2s</span><span class="desc">Tone cutting in and out then gone.</span></button>
+    <button onclick="playLong(138)">138. Mission Failed Sting <span class="long-tag">2.5s</span><span class="desc">Dramatic minor chord → silence → low hit.</span></button>
+    <button onclick="playLong(139)">139. Resource Depleted <span class="long-tag">2s</span><span class="desc">Bubbling descending sequence drying up.</span></button>
+    <button onclick="playLong(140)">140. Toxic Exposure <span class="long-tag">2.5s</span><span class="desc">Dissonant chord with noise wash.</span></button>
+    <button onclick="playLong(141)">141. Cascade Failure <span class="long-tag">3s</span><span class="desc">Rapid descending steps getting slower.</span></button>
+    <button onclick="playLong(142)">142. Hull Integrity Lost <span class="long-tag">2.5s</span><span class="desc">Deep sweep with noise crumble.</span></button>
+    <button onclick="playLong(143)">143. Isolation Warning <span class="long-tag">2.5s</span><span class="desc">Lonely high tone fading in reverb.</span></button>
+    <button onclick="playLong(144)">144. Darkness Falls <span class="long-tag">3s</span><span class="desc">Chord fading into sub-bass nothingness.</span></button>
+    <button onclick="playLong(145)">145. Hope Fading <span class="long-tag">2.5s</span><span class="desc">Pretty tone slowly decomposing.</span></button>
+    <button onclick="playLong(146)">146. Critical Damage <span class="long-tag">2s</span><span class="desc">Sharp impact then alarm warble.</span></button>
+    <button onclick="playLong(147)">147. Life Support Failing <span class="long-tag">3s</span><span class="desc">Breathing rhythm slowing to stop.</span></button>
+    <button onclick="playLong(148)">148. Connection Severed <span class="long-tag">2s</span><span class="desc">Sharp cut — abrupt digital silence.</span></button>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION I: VICTORY & TRIUMPH (3-5+ sec) -->
+<!-- ============================================================ -->
+<h2 id="sec-i" class="section-header">I. Victory &amp; Triumph (3-5+ sec)</h2>
+<p class="section-note">Boss defeats, level completions, achievements, big wins. Longer celebratory sequences.</p>
+<div class="button-group">
+    <button onclick="playLong(149)">149. Victory Fanfare <span class="long-tag">4s</span><span class="desc">C-Major arpeggio building to triumphant chord.</span></button>
+    <button onclick="playLong(150)">150. Boss Defeated <span class="long-tag">5s</span><span class="desc">Tension release into ascending triumph.</span></button>
+    <button onclick="playLong(151)">151. Level Complete <span class="long-tag">3.5s</span><span class="desc">Quick ascending scale → bright resolution.</span></button>
+    <button onclick="playLong(152)">152. Achievement Unlocked <span class="long-tag">3s</span><span class="desc">Sparkle arpeggio → warm chord.</span></button>
+    <button onclick="playLong(153)">153. Research Breakthrough <span class="long-tag">4s</span><span class="desc">Building data tones → eureka chord.</span></button>
+    <button onclick="playLong(154)">154. Colony Saved <span class="long-tag">4.5s</span><span class="desc">Warm major progression → grand resolution.</span></button>
+    <button onclick="playLong(155)">155. Shield Restored <span class="long-tag">3.5s</span><span class="desc">Rising sweep → solid power chord.</span></button>
+    <button onclick="playLong(156)">156. Full Power <span class="long-tag">4s</span><span class="desc">Engine rev building → full throttle chord.</span></button>
+    <button onclick="playLong(157)">157. Triumphant March <span class="long-tag">5s</span><span class="desc">Rhythmic major chord progression — heroic.</span></button>
+    <button onclick="playLong(158)">158. Hero's Return <span class="long-tag">4.5s</span><span class="desc">Slow build from single note → grand harmony.</span></button>
+    <button onclick="playLong(159)">159. Discovery Made <span class="long-tag">3.5s</span><span class="desc">Wonder tones → awe chord.</span></button>
+    <button onclick="playLong(160)">160. Alliance Formed <span class="long-tag">4s</span><span class="desc">Two voices merging into unified harmony.</span></button>
+    <button onclick="playLong(161)">161. War Won <span class="long-tag">5s</span><span class="desc">Battle sounds → silence → victory fanfare.</span></button>
+    <button onclick="playLong(162)">162. Final Boss Down <span class="long-tag">5.5s</span><span class="desc">Epic clash → dramatic pause → massive triumph.</span></button>
+    <button onclick="playLong(163)">163. Ascension <span class="long-tag">5s</span><span class="desc">Continuous rising harmonics building to peak.</span></button>
+    <button onclick="playLong(164)">164. Grand Finale <span class="long-tag">5s</span><span class="desc">Full chord progression with flourish ending.</span></button>
+    <button onclick="playLong(165)">165. Epic Climax <span class="long-tag">5s</span><span class="desc">Building tension → massive harmonic release.</span></button>
+    <button onclick="playLong(166)">166. New Era <span class="long-tag">4.5s</span><span class="desc">Soft dawn → building → hopeful bright resolution.</span></button>
+    <button onclick="playLong(167)">167. Liberation <span class="long-tag">4s</span><span class="desc">Chains breaking → free ascending triumph.</span></button>
+    <button onclick="playLong(168)">168. Transcendence <span class="long-tag">5s</span><span class="desc">Ethereal ascending tones → pure harmony glow.</span></button>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION J: GAME OVER & DEFEAT (3-5+ sec) -->
+<!-- ============================================================ -->
+<h2 id="sec-j" class="section-header">J. Game Over &amp; Defeat (3-5+ sec)</h2>
+<p class="section-note">Death, destruction, endings, loss. Longer somber or dramatic sequences.</p>
+<div class="button-group">
+    <button onclick="playLong(169)">169. Game Over Classic <span class="long-tag">4s</span><span class="desc">Descending minor phrase → deep final hit.</span></button>
+    <button onclick="playLong(170)">170. Total Destruction <span class="long-tag">5s</span><span class="desc">Explosion chaos → fading rumble → silence.</span></button>
+    <button onclick="playLong(171)">171. Colony Lost <span class="long-tag">4.5s</span><span class="desc">Sad minor progression → hollow emptiness.</span></button>
+    <button onclick="playLong(172)">172. Slow Death <span class="long-tag">5s</span><span class="desc">Fading heartbeat → flatline tone.</span></button>
+    <button onclick="playLong(173)">173. Final Breath <span class="long-tag">4s</span><span class="desc">Exhale-like sweep → total silence.</span></button>
+    <button onclick="playLong(174)">174. Into the Void <span class="long-tag">5s</span><span class="desc">Everything slowly collapsing to sub-bass nothing.</span></button>
+    <button onclick="playLong(175)">175. Systems Offline <span class="long-tag">4s</span><span class="desc">Descending power-down step sequence.</span></button>
+    <button onclick="playLong(176)">176. Requiem <span class="long-tag">5s</span><span class="desc">Slow mournful minor chord progression.</span></button>
+    <button onclick="playLong(177)">177. Descent into Darkness <span class="long-tag">5s</span><span class="desc">Chromatic descent through deepening minor keys.</span></button>
+    <button onclick="playLong(178)">178. The End <span class="long-tag">4s</span><span class="desc">One dramatic chord → very long decay.</span></button>
+    <button onclick="playLong(179)">179. All Hope Lost <span class="long-tag">5s</span><span class="desc">Beautiful major → crumbles to dissonance → silence.</span></button>
+    <button onclick="playLong(180)">180. Extinction <span class="long-tag">4.5s</span><span class="desc">Massive chord imploding inward to nothing.</span></button>
+    <button onclick="playLong(181)">181. Silent Aftermath <span class="long-tag">5s</span><span class="desc">Near-silence with distant fading echoes.</span></button>
+    <button onclick="playLong(182)">182. Fade to Black <span class="long-tag">5s</span><span class="desc">Everything slowly losing volume and pitch.</span></button>
+    <button onclick="playLong(183)">183. Last Signal <span class="long-tag">4s</span><span class="desc">Morse-like taps getting weaker until gone.</span></button>
+    <button onclick="playLong(184)">184. Entropy <span class="long-tag">5s</span><span class="desc">Organized harmony → chaotic noise → silence.</span></button>
+</div>
+
+<!-- ============================================================ -->
+<!-- SECTION K: MISCELLANEOUS & INSPIRATION -->
+<!-- ============================================================ -->
+<h2 id="sec-k" class="section-header">K. Miscellaneous &amp; Inspiration</h2>
+<p class="section-note">Unique experimental sounds. Listen and let them spark ideas.</p>
+<div class="button-group">
+    <button onclick="playLong(185)">185. Time Warp <span class="new-tag">NEW</span><span class="desc">Wobbly frequency modulation — time bending.</span></button>
+    <button onclick="playLong(186)">186. Dimensional Shift <span class="new-tag">NEW</span><span class="desc">Chord morphing between realities.</span></button>
+    <button onclick="playLong(187)">187. Memory Fragment <span class="new-tag">NEW</span><span class="desc">Ghostly echoing melody snippet.</span></button>
+    <button onclick="playLong(188)">188. Dream Sequence <span class="new-tag">NEW</span><span class="desc">Soft random wandering tones.</span></button>
+    <button onclick="playLong(189)">189. Gravity Well <span class="new-tag">NEW</span><span class="desc">Suction-like descending pull.</span></button>
+    <button onclick="playLong(190)">190. Phase Shift <span class="new-tag">NEW</span><span class="desc">Phaser-like frequency sweep.</span></button>
+    <button onclick="playLong(191)">191. Echo Chamber <span class="new-tag">NEW</span><span class="desc">Single note in giant reverberant space.</span></button>
+    <button onclick="playLong(192)">192. Resonance Cascade <span class="new-tag">NEW</span><span class="desc">Building harmonic overtone stack.</span></button>
+    <button onclick="playLong(193)">193. Void Walker <span class="new-tag">NEW</span><span class="desc">Eerie rhythmic stepping through emptiness.</span></button>
+    <button onclick="playLong(194)">194. Star Birth <span class="new-tag">NEW</span><span class="desc">Rising noise → bright pure tone emergence.</span></button>
+    <button onclick="playLong(195)">195. Nebula Drift <span class="new-tag">NEW</span><span class="desc">Soft wandering atmospheric pad.</span></button>
+    <button onclick="playLong(196)">196. Chromatic Rain <span class="new-tag">NEW</span><span class="desc">Rapid chromatic notes cascading down.</span></button>
+    <button onclick="playLong(197)">197. Neural Link <span class="new-tag">NEW</span><span class="desc">Fast digital handshake pattern.</span></button>
+    <button onclick="playLong(198)">198. Soul Echo <span class="new-tag">NEW</span><span class="desc">Wavering reverb sine, mournful and distant.</span></button>
+    <button onclick="playLong(199)">199. The Unknown <span class="new-tag">NEW</span><span class="desc">Unpredictable randomized sequence each play.</span></button>
+    <button onclick="playLong(200)">200. Cosmic Whisper <span class="new-tag">NEW</span><span class="desc">Barely audible ethereal shimmer.</span></button>
+</div>
+
+<button id="back-top" onclick="window.scrollTo({top:0})">&#x2191;</button>
+
+<script>
+    // ============================================================
+    // AUDIO CONTEXT & CORE ENGINE
+    // ============================================================
+    let ctx = null;
+    function init() { if(!ctx) { ctx = new (window.AudioContext || window.webkitAudioContext)(); } if(ctx.state === 'suspended') ctx.resume(); }
+
+    function stopAll() {
+        if(ctx) { ctx.close(); ctx = null; }
+    }
+
+    // Back-to-top button visibility
+    window.addEventListener('scroll', function() {
+        document.getElementById('back-top').style.display = window.scrollY > 400 ? 'block' : 'none';
+    });
+
+    // ============================================================
+    // ORIGINAL CORE FUNCTIONS (unchanged)
+    // ============================================================
+    function playTone(type, f1, f2, dur, vol) {
+        init(); const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = type; const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(f1, now);
+        if (f2) { try { osc.frequency.exponentialRampToValueAtTime(f2, now + dur); } catch(e) { osc.frequency.setValueAtTime(f2, now+dur); } }
+        gain.gain.setValueAtTime(vol, now); gain.gain.exponentialRampToValueAtTime(0.01, now + dur);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now); osc.stop(now + dur);
+    }
+
+    function playEcho(type, f1, f2, dur, vol, del) {
+        init(); const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        const delay = ctx.createDelay(); const feedback = ctx.createGain();
+        osc.type = type; const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(f1, now);
+        if (f2) { try { osc.frequency.exponentialRampToValueAtTime(f2, now + dur); } catch(e) { osc.frequency.setValueAtTime(f2, now+dur); } }
+        gain.gain.setValueAtTime(vol, now); gain.gain.exponentialRampToValueAtTime(0.01, now + dur);
+        delay.delayTime.value = del; feedback.gain.value = 0.4;
+        osc.connect(gain); gain.connect(ctx.destination);
+        gain.connect(delay); delay.connect(feedback); feedback.connect(delay); delay.connect(ctx.destination);
+        osc.start(now); osc.stop(now + dur);
+    }
+
+    function playSequence(types, freqs, dur, vol) {
+        init(); freqs.forEach((f, i) => { setTimeout(() => playTone(types[i]||'sine', f, null, dur, vol), i * (dur * 1000)); });
+    }
+
+    function playSweep(f1, f2, f3, dur) {
+        init(); const osc = ctx.createOscillator(); const gain = ctx.createGain();
+        osc.type = 'sawtooth'; const now = ctx.currentTime;
+        osc.frequency.setValueAtTime(f1, now);
+        osc.frequency.linearRampToValueAtTime(f2, now + (dur/2));
+        osc.frequency.linearRampToValueAtTime(f3, now + dur);
+        gain.gain.setValueAtTime(0.1, now); gain.gain.linearRampToValueAtTime(0.01, now + dur);
+        osc.connect(gain); gain.connect(ctx.destination); osc.start(now); osc.stop(now + dur);
+    }
+
+    function playChord(freqs, duration, vol) {
+        init(); freqs.forEach(f => playTone('sine', f, null, duration, vol / freqs.length));
+    }
+
+    function playGlitch() {
+        init(); for(let i=0; i<6; i++) { setTimeout(() => { let rFreq = Math.floor(Math.random() * 1000) + 200; playTone('square', rFreq, null, 0.03, 0.05); }, i * 40); }
+    }
+
+    function playGlitchCustom(dur, range) {
+        init(); for(let i=0; i<8; i++) { setTimeout(() => { let rFreq = Math.floor(Math.random() * range) + 50; playTone('square', rFreq, null, dur, 0.05); }, i * (dur * 1200)); }
+    }
+
+    // ============================================================
+    // GAME FUNCTION (unchanged)
+    // ============================================================
+    function playGame(sound) {
+        switch(sound) {
+            case 'move': playTone('sine', 400, null, 0.1, 0.35); break;
+            case 'wrap': playTone('sine', 500, null, 0.08, 0.35); setTimeout(()=>playTone('sine',600,null,0.08,0.35), 80); break;
+            case 'floorUp': playTone('triangle', 300, 600, 0.15, 0.25); break;
+            case 'floorDown': playTone('triangle', 600, 300, 0.15, 0.25); break;
+            case 'menu': playTone('square', 800, null, 0.05, 0.12); break;
+            case 'turn': playTone('sine', 200, 50, 0.4, 0.45); break;
+            case 'closeMenu': playEcho('triangle', 300, 30, 0.6, 0.3, 0.4); break;
+            case 'unlockBuild': playSequence(['sine','sine','sine','sine'], [1000, 1500, 2000, 2500], 0.05, 0.2); break;
+            case 'digStart': playEcho('square', 100, 50, 0.2, 0.1, 0.15); break;
+            case 'lifeboat': playEcho('sine', 800, null, 0.1, 0.4, 0.3); break;
+            case 'hazard': playSweep(400, 800, 400, 0.4); break;
+            case 'menuSelect': playSequence(['square','square'], [200, 300], 0.1, 0.05); break;
+            case 'powerUp': playTone('sine', 200, 800, 0.4, 0.3); break;
+            case 'powerDown': playTone('sine', 800, 200, 0.4, 0.3); break;
+            case 'success': playSequence(['sine','sine','sine'], [400, 523, 659], 0.1, 0.2); break;
+            case 'reports': playTone('sine', 200, 800, 0.5, 0.3); playTone('triangle', 800, 200, 0.5, 0.2); break;
+        }
+    }
+
+    // ============================================================
+    // NEW HELPER FUNCTIONS
+    // ============================================================
+
+    // White/filtered noise burst
+    function playNoise(dur, vol, freq, Q) {
+        init();
+        var bufSize = Math.max(Math.floor(ctx.sampleRate * dur), 1);
+        var buf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+        var d = buf.getChannelData(0);
+        for (var i = 0; i < bufSize; i++) d[i] = Math.random() * 2 - 1;
+        var src = ctx.createBufferSource();
+        src.buffer = buf;
+        var g = ctx.createGain();
+        var now = ctx.currentTime;
+        g.gain.setValueAtTime(vol, now);
+        g.gain.exponentialRampToValueAtTime(0.01, now + dur);
+        if (freq) {
+            var f = ctx.createBiquadFilter();
+            f.type = 'bandpass';
+            f.frequency.value = freq;
+            f.Q.value = Q || 1;
+            src.connect(f); f.connect(g);
+        } else {
+            src.connect(g);
+        }
+        g.connect(ctx.destination);
+        src.start(now);
+    }
+
+    // Dramatic swell: fade in → sustain → fade out
+    function playSwell(type, f1, f2, dur, vol) {
+        init();
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.type = type;
+        var now = ctx.currentTime;
+        osc.frequency.setValueAtTime(f1, now);
+        if (f2 && f2 !== f1) osc.frequency.exponentialRampToValueAtTime(f2, now + dur);
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(vol, now + dur * 0.25);
+        gain.gain.setValueAtTime(vol, now + dur * 0.65);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + dur);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now); osc.stop(now + dur);
+    }
+
+    // Chord with specified waveform
+    function playChordType(type, freqs, dur, vol) {
+        init();
+        freqs.forEach(function(f) { playTone(type, f, null, dur, vol / freqs.length); });
+    }
+
+    // Play a chord progression: array of [freq arrays], note duration in seconds, volume
+    function playProgression(chords, noteDur, vol, type) {
+        init();
+        type = type || 'sine';
+        chords.forEach(function(chord, i) {
+            setTimeout(function() {
+                chord.forEach(function(f) { playTone(type, f, null, noteDur * 1.1, vol / chord.length); });
+            }, i * noteDur * 1000);
+        });
+    }
+
+    // Arpeggio: array of frequencies played in rapid succession
+    function playArpeggio(freqs, noteDur, vol, type) {
+        init();
+        type = type || 'sine';
+        freqs.forEach(function(f, i) {
+            setTimeout(function() { playTone(type, f, null, noteDur * 1.5, vol); }, i * noteDur * 1000);
+        });
+    }
+
+    // ============================================================
+    // LONG SEQUENCE ENGINE (Sections H, I, J, K)
+    // ============================================================
+    function playLong(id) {
+        init();
+        switch(id) {
+
+            // ========== SECTION H: NEGATIVE & ERROR (2-3 sec) ==========
+
+            case 131: // System Failure — descending minor progression 2.5s
+                playChord([220, 262, 330], 0.6, 0.25);           // Am
+                setTimeout(function(){ playChord([196, 247, 294], 0.6, 0.25); }, 700);   // G dim-ish
+                setTimeout(function(){ playChord([175, 220, 262], 0.6, 0.2); }, 1400);   // F minor
+                setTimeout(function(){ playTone('sine', 110, 55, 0.8, 0.2); }, 2100);    // low fade
+                break;
+
+            case 132: // Access Denied — two harsh buzzer chords 2s
+                playChordType('square', [150, 189, 225], 0.5, 0.15);
+                setTimeout(function(){ playChordType('square', [130, 164, 195], 0.8, 0.18); }, 700);
+                break;
+
+            case 133: // Corruption Detected — glitch + sinking tone 2.5s
+                playGlitchCustom(0.02, 2500);
+                setTimeout(function(){ playTone('sawtooth', 800, 80, 1.8, 0.12); }, 500);
+                break;
+
+            case 134: // Morale Drop — slow mournful descend 3s
+                playSwell('sine', 600, 100, 3.0, 0.2);
+                playSwell('sine', 595, 98, 3.0, 0.1); // beating
+                break;
+
+            case 135: // Structure Collapse — impact + rumble 2.5s
+                playNoise(0.3, 0.25, null, null);
+                playTone('sine', 80, 20, 0.5, 0.3);
+                setTimeout(function(){ playNoise(1.5, 0.1, 100, 1); }, 400);
+                setTimeout(function(){ playTone('sine', 40, 20, 1.5, 0.15); }, 500);
+                break;
+
+            case 136: // Power Drain — descending arpeggio fade 2.5s
+                playArpeggio([880, 659, 523, 392, 294, 220, 165, 110], 0.12, 0.2, 'sine');
+                setTimeout(function(){ playTone('sine', 80, 30, 1.2, 0.1); }, 1200);
+                break;
+
+            case 137: // Signal Lost — cutting in and out 2s
+                [0, 300, 600, 900, 1100, 1300, 1500].forEach(function(t, i) {
+                    setTimeout(function(){ playTone('sine', 600, null, 0.08 - i*0.008, 0.2 - i*0.025); }, t);
+                });
+                break;
+
+            case 138: // Mission Failed Sting — chord → silence → low hit 2.5s
+                playChord([220, 262, 330, 440], 0.6, 0.3);  // Am chord
+                setTimeout(function(){ playTone('sine', 55, 30, 1.0, 0.25); }, 1500); // low hit after gap
+                break;
+
+            case 139: // Resource Depleted — bubbling down 2s
+                playSequence(['sine','sine','sine','sine','sine','sine','sine','sine'],
+                    [800, 700, 600, 500, 400, 300, 200, 100], 0.08, 0.2);
+                break;
+
+            case 140: // Toxic Exposure — dissonant chord + noise 2.5s
+                playChord([200, 251, 317], 1.5, 0.15);  // tritone cluster
+                playNoise(2.0, 0.06, 500, 2);
+                setTimeout(function(){ playChord([180, 227, 286], 1.0, 0.1); }, 1200);
+                break;
+
+            case 141: // Cascade Failure — rapid steps getting slower 3s
+                var cf = [1200,1100,1000,900,800,700,600,500,400,300,200,100];
+                var t = 0;
+                cf.forEach(function(f, i) {
+                    setTimeout(function(){ playTone('square', f, null, 0.08, 0.12); }, t);
+                    t += 80 + i * 25;
+                });
+                break;
+
+            case 142: // Hull Integrity Lost — deep sweep + noise 2.5s
+                playSweep(600, 50, 30, 2.0);
+                playNoise(2.0, 0.08, 200, 1);
+                break;
+
+            case 143: // Isolation Warning — lonely high fade 2.5s
+                playEcho('sine', 1200, 1200, 0.3, 0.15, 0.25);
+                setTimeout(function(){ playEcho('sine', 1100, 1100, 0.2, 0.08, 0.3); }, 800);
+                setTimeout(function(){ playEcho('sine', 1000, 1000, 0.15, 0.04, 0.35); }, 1600);
+                break;
+
+            case 144: // Darkness Falls — chord to sub-bass 3s
+                playChord([330, 392, 494], 1.0, 0.2);
+                setTimeout(function(){ playChord([220, 262, 330], 1.0, 0.15); }, 1000);
+                setTimeout(function(){ playSwell('sine', 80, 30, 1.5, 0.15); }, 2000);
+                break;
+
+            case 145: // Hope Fading — pretty tone decomposing 2.5s
+                playChord([523, 659, 784], 0.8, 0.2);  // C major high
+                setTimeout(function(){ playChord([523, 622, 740], 0.8, 0.15); }, 800);  // detuned
+                setTimeout(function(){ playChord([500, 600, 710], 0.8, 0.1); }, 1600);  // more detuned
+                break;
+
+            case 146: // Critical Damage — impact + alarm 2s
+                playNoise(0.1, 0.3, null, null);
+                playTone('sine', 100, 30, 0.2, 0.3);
+                setTimeout(function(){ playSweep(400, 900, 400, 0.6); }, 300);
+                setTimeout(function(){ playSweep(400, 900, 400, 0.6); }, 1000);
+                break;
+
+            case 147: // Life Support Failing — breathing slowing 3s
+                [0, 500, 1100, 1800, 2500].forEach(function(t, i) {
+                    setTimeout(function(){
+                        playTone('sine', 200 - i*20, 250 - i*20, 0.2 - i*0.02, 0.15 - i*0.02);
+                    }, t);
+                });
+                break;
+
+            case 148: // Connection Severed — sharp cut 2s
+                playTone('sine', 800, null, 0.5, 0.25);
+                playTone('sine', 803, null, 0.5, 0.15); // beating
+                setTimeout(function(){ playNoise(0.05, 0.3, null, null); }, 500);
+                setTimeout(function(){ playTone('sine', 800, 100, 0.8, 0.15); }, 550);
+                break;
+
+
+            // ========== SECTION I: VICTORY & TRIUMPH (3-5+ sec) ==========
+
+            case 149: // Victory Fanfare — C Major arpeggio → chord 4s
+                playArpeggio([523, 659, 784, 1047], 0.12, 0.2, 'sine');
+                setTimeout(function(){ playChord([262, 330, 392, 523], 1.5, 0.3); }, 600);
+                setTimeout(function(){ playChord([523, 659, 784, 1047], 2.0, 0.3); }, 2200);
+                break;
+
+            case 150: // Boss Defeated — tension → release → triumph 5s
+                playChord([220, 262, 330], 0.8, 0.15);  // Am (tension)
+                setTimeout(function(){ playChord([247, 294, 370], 0.8, 0.15); }, 900);  // Bdim
+                setTimeout(function(){ // release sweep
+                    playSweep(200, 1000, 800, 0.6);
+                }, 1800);
+                setTimeout(function(){ // G major
+                    playChord([196, 247, 294, 392], 0.8, 0.25);
+                }, 2500);
+                setTimeout(function(){ // C major triumph
+                    playChord([262, 330, 392, 523], 1.2, 0.3);
+                    playChord([523, 659, 784, 1047], 1.2, 0.2);
+                }, 3500);
+                break;
+
+            case 151: // Level Complete — ascending scale → chord 3.5s
+                playArpeggio([262, 294, 330, 349, 392, 440, 494, 523], 0.08, 0.18, 'sine');
+                setTimeout(function(){
+                    playChord([523, 659, 784, 1047], 1.8, 0.25);
+                }, 800);
+                break;
+
+            case 152: // Achievement Unlocked — sparkle → warm chord 3s
+                [0, 60, 120, 180, 240].forEach(function(t, i) {
+                    setTimeout(function(){ playTone('sine', 1200 + i*200, null, 0.08, 0.15); }, t);
+                });
+                setTimeout(function(){ playChord([440, 554, 659, 880], 2.0, 0.25); }, 400);
+                break;
+
+            case 153: // Research Breakthrough — building data → eureka 4s
+                [0,100,200,300,400,500,600,700,800,900].forEach(function(t, i) {
+                    setTimeout(function(){ playTone('square', 200+i*100, null, 0.04, 0.08); }, t);
+                });
+                setTimeout(function(){ playChord([523, 659, 784], 0.8, 0.2); }, 1200);
+                setTimeout(function(){ playChord([659, 784, 1047, 1319], 2.0, 0.3); }, 2200);
+                break;
+
+            case 154: // Colony Saved — warm progression → grand 4.5s
+                playProgression([
+                    [262, 330, 392],    // C
+                    [349, 440, 523],    // F
+                    [392, 494, 587],    // G
+                    [262, 330, 392, 523] // C (full)
+                ], 0.9, 0.25, 'sine');
+                setTimeout(function(){ playChord([523,659,784,1047], 1.5, 0.3); }, 3800);
+                break;
+
+            case 155: // Shield Restored — rising sweep → solid chord 3.5s
+                playSweep(100, 1500, 1000, 1.5);
+                setTimeout(function(){ playChord([349,440,523,698], 2.0, 0.3); }, 1600);
+                break;
+
+            case 156: // Full Power — engine rev → power chord 4s
+                playSwell('sawtooth', 80, 400, 2.0, 0.12);
+                setTimeout(function(){
+                    playChord([110,220,330,440,880], 2.0, 0.3);
+                }, 2100);
+                break;
+
+            case 157: // Triumphant March — rhythmic major 5s
+                var march = [[262,330,392],[262,330,392],[349,440,523],[392,494,587],[262,330,392,523]];
+                march.forEach(function(c, i) {
+                    setTimeout(function(){ playChord(c, 0.6, 0.25); }, i * 900);
+                });
+                break;
+
+            case 158: // Hero's Return — slow build 4.5s
+                playTone('sine', 262, null, 1.0, 0.1);
+                setTimeout(function(){ playChord([262,330], 0.8, 0.15); }, 1000);
+                setTimeout(function(){ playChord([262,330,392], 0.8, 0.2); }, 2000);
+                setTimeout(function(){ playChord([262,330,392,523], 1.5, 0.3); }, 3000);
+                break;
+
+            case 159: // Discovery Made — wonder → awe 3.5s
+                playEcho('sine', 800, 1200, 0.2, 0.15, 0.15);
+                setTimeout(function(){ playEcho('sine', 1000, 1500, 0.2, 0.15, 0.15); }, 500);
+                setTimeout(function(){ playChord([523,659,784,1047], 2.0, 0.25); }, 1200);
+                break;
+
+            case 160: // Alliance Formed — two voices merging 4s
+                // Voice A ascending
+                playArpeggio([262, 330, 392], 0.2, 0.15, 'sine');
+                // Voice B ascending (offset)
+                setTimeout(function(){ playArpeggio([330, 392, 494], 0.2, 0.15, 'triangle'); }, 300);
+                // Merged chord
+                setTimeout(function(){ playChord([262,330,392,494,523], 2.0, 0.3); }, 1500);
+                break;
+
+            case 161: // War Won — battle → silence → victory 5s
+                playGlitchCustom(0.03, 1500);
+                playNoise(0.4, 0.1, null, null);
+                setTimeout(function(){ playTone('sine', 200, 50, 0.5, 0.15); }, 500);
+                // silence gap 1.5-3s
+                setTimeout(function(){
+                    playArpeggio([392, 494, 587, 784], 0.1, 0.2, 'sine');
+                }, 3000);
+                setTimeout(function(){
+                    playChord([392,494,587,784], 1.5, 0.3);
+                }, 3500);
+                break;
+
+            case 162: // Final Boss Down — epic sequence 5.5s
+                // Clash
+                playNoise(0.15, 0.25, null, null);
+                playChord([110,220,330], 0.5, 0.2);
+                // Rising tension
+                setTimeout(function(){ playSweep(100,2000,1500,1.0); }, 700);
+                // Dramatic pause (silence)
+                // Massive triumph
+                setTimeout(function(){
+                    playChord([262,330,392,523], 0.8, 0.25);
+                }, 2500);
+                setTimeout(function(){
+                    playChord([349,440,523,698], 0.8, 0.25);
+                }, 3400);
+                setTimeout(function(){
+                    playChord([392,494,587,784], 0.8, 0.25);
+                    playChord([784,988,1175,1568], 0.8, 0.15); // octave double
+                }, 4300);
+                break;
+
+            case 163: // Ascension — continuous rising harmonics 5s
+                [1,2,3,4,5,6,7,8].forEach(function(n, i) {
+                    setTimeout(function(){
+                        playSwell('sine', 100*n, 110*n, 1.2, 0.08);
+                    }, i * 550);
+                });
+                break;
+
+            case 164: // Grand Finale — full progression + flourish 5s
+                playProgression([
+                    [262,330,392],     // C
+                    [220,262,330],     // Am
+                    [349,440,523],     // F
+                    [392,494,587]      // G
+                ], 0.8, 0.2, 'sine');
+                setTimeout(function(){
+                    playArpeggio([523,659,784,1047,1319,1568], 0.06, 0.2, 'sine');
+                }, 3400);
+                setTimeout(function(){
+                    playChord([262,523,659,784,1047,1568], 1.5, 0.3);
+                }, 4000);
+                break;
+
+            case 165: // Epic Climax — building tension → release 5s
+                // Building repeated notes getting faster
+                var ec = [0,500,900,1200,1450,1650,1800,1920,2010,2080,2130,2170,2200];
+                ec.forEach(function(t, i) {
+                    setTimeout(function(){ playTone('sine', 440, null, 0.15, 0.1 + i*0.015); }, t);
+                });
+                // Massive release
+                setTimeout(function(){
+                    playChord([220,440,554,659,880,1108,1319], 2.5, 0.35);
+                }, 2500);
+                break;
+
+            case 166: // New Era — soft dawn → building → bright 4.5s
+                playSwell('sine', 200, 250, 1.5, 0.08);
+                setTimeout(function(){ playChord([262,330], 1.0, 0.12); }, 1200);
+                setTimeout(function(){ playChord([262,330,392], 1.0, 0.18); }, 2200);
+                setTimeout(function(){ playChord([262,330,392,523,659], 1.8, 0.28); }, 3200);
+                break;
+
+            case 167: // Liberation — chains breaking → free 4s
+                // Harsh breaking sounds
+                [0,150,350].forEach(function(t) {
+                    setTimeout(function(){ playNoise(0.06, 0.2, null, null); playTone('square',100,50,0.1,0.1); }, t);
+                });
+                // Rising free tones
+                setTimeout(function(){ playArpeggio([262,392,523,659,784], 0.1, 0.2, 'sine'); }, 800);
+                setTimeout(function(){ playChord([523,659,784,1047], 2.0, 0.3); }, 1500);
+                break;
+
+            case 168: // Transcendence — ethereal ascending → pure 5s
+                [0,600,1200,1800,2400].forEach(function(t, i) {
+                    setTimeout(function(){
+                        playChord([300+i*100, 450+i*100, 600+i*100], 1.2, 0.12);
+                    }, t);
+                });
+                setTimeout(function(){ playChord([800,1000,1200,1600], 2.5, 0.2); }, 3200);
+                break;
+
+
+            // ========== SECTION J: GAME OVER & DEFEAT (3-5+ sec) ==========
+
+            case 169: // Game Over Classic — descending minor → final hit 4s
+                playChord([440, 523, 659], 0.7, 0.2);   // Am high
+                setTimeout(function(){ playChord([349, 415, 523], 0.7, 0.2); }, 800);
+                setTimeout(function(){ playChord([294, 349, 440], 0.7, 0.18); }, 1600);
+                setTimeout(function(){ playTone('sine', 110, 55, 1.5, 0.25); }, 2600);
+                break;
+
+            case 170: // Total Destruction — explosion → fade 5s
+                playNoise(0.8, 0.3, null, null);
+                playTone('sine', 60, 15, 1.0, 0.3);
+                playChordType('sawtooth', [55, 110, 165], 0.8, 0.15);
+                setTimeout(function(){ playNoise(2.0, 0.08, 100, 0.5); }, 800);
+                setTimeout(function(){ playSwell('sine', 40, 20, 3.0, 0.1); }, 1500);
+                break;
+
+            case 171: // Colony Lost — sad progression → hollow 4.5s
+                playProgression([
+                    [220, 262, 330],    // Am
+                    [294, 349, 440],    // Dm
+                    [165, 196, 247],    // Em low
+                    [220, 262, 330]     // Am
+                ], 0.9, 0.18, 'sine');
+                setTimeout(function(){ playSwell('sine', 110, 80, 1.2, 0.08); }, 3800);
+                break;
+
+            case 172: // Slow Death — heartbeat fading → flatline 5s
+                [0, 800, 1700, 2700, 3800].forEach(function(t, i) {
+                    setTimeout(function(){
+                        playTone('sine', 80 - i*8, null, 0.15 - i*0.02, 0.2 - i*0.03);
+                        setTimeout(function(){ playTone('sine', 60 - i*6, null, 0.1, 0.12 - i*0.02); }, 200);
+                    }, t);
+                });
+                // Flatline
+                setTimeout(function(){ playTone('sine', 1000, null, 1.5, 0.1); }, 4200);
+                break;
+
+            case 173: // Final Breath — exhale sweep → silence 4s
+                playNoise(1.0, 0.08, 300, 0.5);
+                playSwell('sine', 300, 80, 2.5, 0.12);
+                setTimeout(function(){ playNoise(0.8, 0.04, 200, 0.5); }, 1500);
+                break;
+
+            case 174: // Into the Void — collapsing to sub-bass 5s
+                playChord([440, 523, 659, 880], 1.0, 0.2);
+                setTimeout(function(){ playChord([330, 392, 494, 659], 1.0, 0.15); }, 1100);
+                setTimeout(function(){ playChord([220, 262, 330, 440], 1.0, 0.12); }, 2200);
+                setTimeout(function(){ playChord([110, 131, 165, 220], 1.2, 0.1); }, 3300);
+                setTimeout(function(){ playSwell('sine', 55, 25, 1.5, 0.08); }, 4200);
+                break;
+
+            case 175: // Systems Offline — descending power-down 4s
+                var sysFreqs = [1200,1000,800,600,400,200,100,50];
+                sysFreqs.forEach(function(f, i) {
+                    setTimeout(function(){
+                        playTone('square', f, f*0.8, 0.3, 0.1);
+                    }, i * 450);
+                });
+                break;
+
+            case 176: // Requiem — slow minor progression 5s
+                playProgression([
+                    [165, 196, 247],    // Em
+                    [220, 262, 330],    // Am
+                    [131, 165, 196],    // C low
+                    [147, 175, 220],    // Dm low
+                    [165, 196, 247]     // Em resolve
+                ], 0.9, 0.15, 'sine');
+                break;
+
+            case 177: // Descent into Darkness — chromatic descent 5s
+                var dd = [494,466,440,415,392,370,349,330,311,294,277,262,247,233,220];
+                dd.forEach(function(f, i) {
+                    setTimeout(function(){
+                        playTone('sine', f, null, 0.4, 0.12 - i*0.006);
+                    }, i * 320);
+                });
+                break;
+
+            case 178: // The End — one dramatic chord → long decay 4s
+                playChord([110, 165, 220, 262, 330], 3.5, 0.3);
+                playChordType('triangle', [110, 165, 220], 3.5, 0.1);
+                break;
+
+            case 179: // All Hope Lost — major → dissonance → silence 5s
+                playChord([262, 330, 392, 523], 1.0, 0.2);  // beautiful C
+                setTimeout(function(){ playChord([262, 311, 370, 466], 1.2, 0.18); }, 1200); // chromatic shift
+                setTimeout(function(){ playChord([233, 293, 349, 440], 1.2, 0.12); }, 2600); // more dissonant
+                setTimeout(function(){ playTone('sine', 180, 50, 1.5, 0.06); }, 4000); // whisper fade
+                break;
+
+            case 180: // Extinction — massive chord imploding 4.5s
+                playChord([55,110,165,220,330,440,660,880], 1.5, 0.3);
+                setTimeout(function(){ playChord([55,110,165,220], 1.2, 0.2); }, 1600);
+                setTimeout(function(){ playChord([55,110], 1.0, 0.15); }, 2800);
+                setTimeout(function(){ playTone('sine', 55, 25, 1.0, 0.08); }, 3800);
+                break;
+
+            case 181: // Silent Aftermath — distant fading echoes 5s
+                [0, 800, 1600, 2400, 3200, 4000].forEach(function(t, i) {
+                    setTimeout(function(){
+                        playEcho('sine', 400 + (i%2)*200, 400 + (i%2)*200, 0.03, 0.06 - i*0.008, 0.3);
+                    }, t);
+                });
+                break;
+
+            case 182: // Fade to Black — everything losing volume/pitch 5s
+                [0, 700, 1400, 2100, 2800, 3500].forEach(function(t, i) {
+                    setTimeout(function(){
+                        playChord(
+                            [220 - i*25, 330 - i*35, 440 - i*45],
+                            0.8,
+                            0.2 - i*0.028
+                        );
+                    }, t);
+                });
+                break;
+
+            case 183: // Last Signal — morse fading 4s
+                var morse = [0, 200, 400, 800, 1000, 1500, 1700, 2200, 2400, 2800, 3200];
+                morse.forEach(function(t, i) {
+                    setTimeout(function(){
+                        playTone('sine', 800, null, i < 6 ? 0.1 : 0.06, 0.15 - i*0.012);
+                    }, t);
+                });
+                break;
+
+            case 184: // Entropy — harmony → chaos → silence 5s
+                playChord([262, 330, 392, 523], 1.0, 0.2);  // ordered
+                setTimeout(function(){
+                    playChord([270, 340, 405, 540], 0.8, 0.15); // slightly off
+                }, 1100);
+                setTimeout(function(){
+                    playGlitchCustom(0.04, 2000);  // chaos
+                }, 2100);
+                setTimeout(function(){
+                    playNoise(0.5, 0.1, null, null);
+                }, 2800);
+                setTimeout(function(){
+                    playTone('sine', 100, 20, 1.5, 0.04); // dying whisper
+                }, 3500);
+                break;
+
+
+            // ========== SECTION K: MISC & INSPIRATION ==========
+
+            case 185: // Time Warp — wobbly modulation 1.5s
+                playSwell('sine', 400, 410, 1.5, 0.15);
+                playSwell('sine', 600, 590, 1.5, 0.1);
+                playSwell('sawtooth', 200, 205, 1.5, 0.05);
+                break;
+
+            case 186: // Dimensional Shift — chord morphing 2s
+                playChord([262, 330, 392], 0.6, 0.15);
+                setTimeout(function(){ playChord([277, 349, 415], 0.6, 0.15); }, 600);
+                setTimeout(function(){ playChord([294, 370, 440], 0.8, 0.15); }, 1200);
+                break;
+
+            case 187: // Memory Fragment — ghostly echo melody 2s
+                playEcho('sine', 659, 659, 0.1, 0.12, 0.2);
+                setTimeout(function(){ playEcho('sine', 784, 784, 0.1, 0.08, 0.25); }, 400);
+                setTimeout(function(){ playEcho('sine', 523, 523, 0.15, 0.06, 0.3); }, 900);
+                break;
+
+            case 188: // Dream Sequence — soft random wandering 3s
+                for (var di = 0; di < 12; di++) {
+                    (function(i){
+                        setTimeout(function(){
+                            var df = 300 + Math.floor(Math.random() * 600);
+                            playTone('sine', df, null, 0.3, 0.06);
+                        }, i * 250);
+                    })(di);
+                }
+                break;
+
+            case 189: // Gravity Well — suction descend 1.5s
+                playSweep(1500, 50, 30, 1.5);
+                playSwell('sine', 600, 40, 1.5, 0.12);
+                break;
+
+            case 190: // Phase Shift — phaser sweep 1s
+                playTone('sine', 400, 401, 1.0, 0.15);
+                playTone('sine', 800, 803, 1.0, 0.1);
+                playTone('sine', 1200, 1207, 1.0, 0.06);
+                break;
+
+            case 191: // Echo Chamber — single note huge reverb 2s
+                [0, 80, 170, 280, 410, 570, 770].forEach(function(t, i) {
+                    setTimeout(function(){
+                        playTone('sine', 440, null, 0.3, 0.2 - i*0.025);
+                    }, t);
+                });
+                break;
+
+            case 192: // Resonance Cascade — building overtones 2.5s
+                [1,2,3,4,5,6,7,8].forEach(function(n, i) {
+                    setTimeout(function(){
+                        playTone('sine', 110 * n, null, 1.5 - i*0.12, 0.12);
+                    }, i * 280);
+                });
+                break;
+
+            case 193: // Void Walker — eerie stepping 2s
+                [0, 350, 700, 1050, 1400].forEach(function(t, i) {
+                    setTimeout(function(){
+                        playTone('triangle', 100 + i*10, 90 + i*8, 0.15, 0.12);
+                        playEcho('sine', 800, 800, 0.02, 0.04, 0.2);
+                    }, t);
+                });
+                break;
+
+            case 194: // Star Birth — noise → bright tone 2s
+                playNoise(1.0, 0.12, 1000, 0.3);
+                setTimeout(function(){
+                    playSwell('sine', 800, 1200, 1.2, 0.2);
+                }, 800);
+                break;
+
+            case 195: // Nebula Drift — soft wandering pad 3s
+                playSwell('sine', 250, 280, 3.0, 0.1);
+                playSwell('sine', 375, 355, 3.0, 0.07);
+                playSwell('sine', 500, 530, 3.0, 0.05);
+                break;
+
+            case 196: // Chromatic Rain — cascading notes 2s
+                var rain = [1047,988,932,880,831,784,740,698,659,622,587,554,523,494,466,440];
+                rain.forEach(function(f, i) {
+                    setTimeout(function(){
+                        playTone('sine', f, null, 0.12, 0.1);
+                    }, i * 120);
+                });
+                break;
+
+            case 197: // Neural Link — fast data handshake 1.5s
+                [0,80,160,240,320,400,480,560,640,720,800,880,960].forEach(function(t) {
+                    setTimeout(function(){
+                        playTone('square', 200 + Math.floor(Math.random()*1200), null, 0.03, 0.08);
+                    }, t);
+                });
+                setTimeout(function(){ playTone('sine', 600, null, 0.3, 0.15); }, 1100);
+                break;
+
+            case 198: // Soul Echo — wavering reverb sine 2.5s
+                playEcho('sine', 440, 445, 0.5, 0.12, 0.15);
+                setTimeout(function(){ playEcho('sine', 435, 440, 0.5, 0.08, 0.2); }, 700);
+                setTimeout(function(){ playEcho('sine', 330, 335, 0.6, 0.06, 0.25); }, 1500);
+                break;
+
+            case 199: // The Unknown — random each play 2s
+                for (var ui = 0; ui < 8; ui++) {
+                    (function(i){
+                        setTimeout(function(){
+                            var types = ['sine','square','triangle','sawtooth'];
+                            var t = types[Math.floor(Math.random()*4)];
+                            var f = 50 + Math.floor(Math.random() * 2000);
+                            var d = 0.05 + Math.random() * 0.3;
+                            playTone(t, f, null, d, 0.08);
+                        }, i * 250);
+                    })(ui);
+                }
+                break;
+
+            case 200: // Cosmic Whisper — barely audible ethereal 3s
+                playSwell('sine', 1200, 1250, 3.0, 0.04);
+                playSwell('sine', 1800, 1790, 3.0, 0.03);
+                playSwell('sine', 2400, 2420, 3.0, 0.02);
+                setTimeout(function(){ playSwell('sine', 600, 610, 2.0, 0.03); }, 800);
+                break;
+
+        } // end switch
+    } // end playLong
+
+</script>
+</body>
+</html>

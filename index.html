@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v1.4.6</title>
+        <title>YAY! v1.4.7</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -157,15 +157,25 @@
             initAudio(); freqs.forEach(f => playTone('sine', f, null, duration, vol / freqs.length));
         }
 
+        function playArpeggio(freqs, dur, vol, type) {
+            initAudio(); freqs.forEach((f, i) => { setTimeout(() => playTone(type || 'sine', f, null, dur, vol), i * (dur * 1000)); });
+        }
+
         window.playGameSound = function(action) {
             switch(action) {
-                case 'startup': playSequence(['sine','sine','sine'], [400, 523, 659], 0.1, 0.5); break;
+                case 'startup': playSequence(['sine','sine','sine','sine'], [800,1000,1200,1600], 0.04, 0.18); break;
                 case 'nav': playTone('sine', 880, 440, 0.05, 0.4); break;
                 case 'select': playSequence(['sine','sine'], [660, 880], 0.08, 0.4); break;
                 case 'save': playChord([523.25, 659.25, 783.99, 1046.50], 0.3, 0.5); break;
                 case 'undo': playSequence(['sine','sine','sine'], [1046.50, 783.99, 523.25], 0.1, 0.4); break;
                 case 'cancel': playTone('sine', 440, 220, 0.1, 0.4); break;
                 case 'limit': playTone('sine', 220, 110, 0.1, 0.5); break;
+                case 'roll': [0, 300, 600, 900, 1100, 1300, 1500].forEach((t, i) => { setTimeout(() => playTone('sine', 600, null, 0.08 - i*0.008, 0.2 - i*0.025), t); }); break;
+                case 'hold': playTone('sine', 400, 700, 0.1, 0.2); break;
+                case 'release': playTone('sine', 700, 400, 0.1, 0.2); break;
+                case 'valueTick': playSequence(['sine','sine','sine'], [100, 200, 300], 0.05, 0.3); break;
+                case 'gameStart': playEcho('sine', 600, 800, 0.2, 0.3, 0.2); break;
+                case 'victory': playArpeggio([523, 659, 784, 1047], 0.12, 0.2, 'sine'); setTimeout(() => { playChord([262, 330, 392, 523], 1.5, 0.3); }, 600); setTimeout(() => { playChord([523, 659, 784, 1047], 2.0, 0.3); }, 2200); break;
             }
         };
 
@@ -283,7 +293,7 @@
                 state.topScores.sort((a, b) => b.score - a.score);
                 if (state.topScores.length > 10) state.topScores.length = 10;
 
-                window.playGameSound('startup');
+                window.playGameSound('victory');
                 state.inputMode = 'nav';
                 window.saveState();
                 window.renderScorecard();
@@ -326,7 +336,7 @@
             if (state.rollsLeft > 0) {
                 state.dice = state.dice.map((d, i) => state.heldDice[i] ? d : Math.ceil(Math.random() * 6));
                 state.rollsLeft--;
-                window.playGameSound('select');
+                window.playGameSound('roll');
 
                 if (state.rollsLeft === 0) {
                     // Auto-Funnel into Placement Mode
@@ -360,7 +370,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.4.6 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.4.7 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -548,7 +558,7 @@
                     state.gameMode = e.key.toLowerCase() === 'd' ? 'digital' : 'manual';
                     state.inputMode = 'nav';
                     state.setupIndex = 0;
-                    window.playGameSound('save');
+                    window.playGameSound('gameStart');
                     window.saveState();
                     window.renderScorecard();
                     window.announce(`Game started. ${state.gameMode} dice mode.${window.getTurnAnnouncement(0)}`);
@@ -668,7 +678,7 @@
                         e.preventDefault();
                         const index = holdKeys.indexOf(e.code);
                         state.heldDice[index] = !state.heldDice[index];
-                        window.playGameSound('select');
+                        state.heldDice[index] ? window.playGameSound('hold') : window.playGameSound('release');
                         const status = state.heldDice[index] ? "Held" : "Released";
                         window.announce(`Die ${index + 1}, ${state.dice[index]}, ${status}.`);
                         window.renderScorecard();
@@ -980,7 +990,7 @@
 
                     state.currentCategory = available[idx];
                     const calcScore = window.calculateScore(state.dice, state.currentCategory);
-                    window.playGameSound('nav');
+                    window.playGameSound('valueTick');
                     window.announce(`${cats[state.currentCategory].name}. Potential score: ${calcScore === 0 ? 'Scratch, 0' : calcScore}.`);
                     window.renderScorecard();
                 } else if (e.key.toLowerCase() === 'i') {
@@ -1050,7 +1060,7 @@
                         if (state.tempScore > category.max) state.tempScore = category.max;
                         if (state.tempScore < 0) state.tempScore = 0;
                     }
-                    if (oldScore === state.tempScore) { window.playGameSound('limit'); } else { window.playGameSound('nav'); }
+                    if (oldScore === state.tempScore) { window.playGameSound('limit'); } else { window.playGameSound('valueTick'); }
                     window.announce(state.tempScore === 0 ? "Scratch, 0" : state.tempScore);
                     window.renderScorecard();
                 }
