@@ -1,4 +1,4 @@
-/* audio.js - v2.1.2 */
+/* audio.js - v2.2.0 */
         window.audioCtx = null;
         function initAudio() { 
             if(!window.audioCtx) { window.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
@@ -68,7 +68,7 @@
         window.botAudioCallback = null;
 
         window.playBotAudio = function(key, fallbackText, callback) {
-            let path = window.BOT_AUDIO[key];
+            let path = window.BOT_AUDIO[key] || (key.endsWith('.mp3') ? key : null);
 
             const executeFallback = () => {
                 if (fallbackText) window.announce(fallbackText);

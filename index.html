@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v2.1.2</title>
+        <title>YAY! v2.2.0</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -121,7 +121,7 @@
     <script src="audio.js"></script>
     <script src="core.js"></script>
     <script>
-        /* index.html logic - v2.1.2 */
+        /* index.html logic - v2.2.0 */
         window.announce = function(msg) {
             const el = document.getElementById('aria-announce');
             if (el) {
@@ -137,7 +137,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 2.1.2 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 2.2.0 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -318,20 +318,10 @@
                     }
                 } else if (e.key.toLowerCase() === 'b') {
                     e.preventDefault();
-                    const botName = "Bumbling Bot [AI]";
-                    state.players.push({ id: state.setupIndex + 1, name: botName, isBot: true, categories: getDefaultCategories() });
-                    
-                    window.playBotAudio('bot_intro', `${botName} added.`, () => {
-                        if (state.players.length === 6) {
-                            state.inputMode = 'setup_dice_choice';
-                            window.playGameSound('select');
-                            window.announce("Setup complete. 6 players added. Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
-                        } else {
-                            state.inputMode = 'setup_choice';
-                            window.playGameSound('select');
-                            window.announce(`Press Enter to add another human player, B to add another Bot, or press S to start the game.`);
-                        }
-                    });
+                    state.botIndex = 0;
+                    state.inputMode = 'setup_bot_choice';
+                    window.playGameSound('select');
+                    window.announce(`Select AI opponent. ${window.BOT_LIBRARY[state.botIndex].name}. Use up and down arrows, then Enter to select.`);
                     return;
                 }
                 return;
@@ -344,10 +334,34 @@
                     window.playGameSound('select');
                     window.announce(`Player ${state.setupIndex + 1}, choose name. Or press B to add a Bot.`);
                 } else if (e.key.toLowerCase() === 'b') {
-                    const botName = "Bumbling Bot [AI]";
-                    state.players.push({ id: state.setupIndex + 1, name: botName, isBot: true, categories: getDefaultCategories() });
+                    e.preventDefault();
+                    state.botIndex = 0;
+                    state.inputMode = 'setup_bot_choice';
+                    window.playGameSound('select');
+                    window.announce(`Select AI opponent. ${window.BOT_LIBRARY[state.botIndex].name}. Use up and down arrows, then Enter to select.`);
+                    return;
+                } else if (e.key.toLowerCase() === 's' && state.players.length > 0) {
+                    state.inputMode = 'setup_dice_choice';
+                    window.playGameSound('select');
+                    window.announce("Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
+                }
+                return;
+            } else if (state.inputMode === 'setup_bot_choice') {
+                e.preventDefault();
+                if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                    if (e.key === 'ArrowDown') {
+                        state.botIndex = (state.botIndex + 1) % window.BOT_LIBRARY.length;
+                    } else {
+                        state.botIndex = (state.botIndex - 1 + window.BOT_LIBRARY.length) % window.BOT_LIBRARY.length;
+                    }
+                    window.playGameSound('nav');
+                    window.announce(window.BOT_LIBRARY[state.botIndex].name);
+                } else if (e.key === 'Enter') {
+                    const bot = window.BOT_LIBRARY[state.botIndex];
+                    state.players.push({ id: state.setupIndex + 1, name: bot.name, isBot: true, abbr: bot.abbr, categories: getDefaultCategories() });
                     
-                    window.playBotAudio('bot_intro', `${botName} added.`, () => {
+                    const introKey = `audio/intro_1${bot.abbr}.mp3`;
+                    window.playBotAudio(introKey, `${bot.name} added.`, () => {
                         if (state.players.length === 6) {
                             state.inputMode = 'setup_dice_choice';
                             window.playGameSound('select');
@@ -358,10 +372,10 @@
                             window.announce(`Press Enter to add another human player, B to add another Bot, or press S to start the game.`);
                         }
                     });
-                } else if (e.key.toLowerCase() === 's' && state.players.length > 0) {
-                    state.inputMode = 'setup_dice_choice';
-                    window.playGameSound('select');
-                    window.announce("Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
+                } else if (e.key === 'Escape') {
+                    state.inputMode = state.players.length === 0 ? 'setup' : 'setup_choice';
+                    window.playGameSound('cancel');
+                    window.announce("Cancelled bot selection.");
                 }
                 return;
             } else if (state.inputMode === 'setup_dice_choice') {

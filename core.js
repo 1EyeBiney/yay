@@ -1,5 +1,16 @@
-/* core.js - v2.1.2 */
+/* core.js - v2.2.0 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
+
+        window.BOT_LIBRARY = [
+            { name: "Amelia Circuit [AI]", abbr: "ac" },
+            { name: "Jerry Vox [AI]", abbr: "jv" },
+            { name: "Junie Byte [AI]", abbr: "jb" },
+            { name: "Pearlie Fae [AI]", abbr: "pf" },
+            { name: "Curtis Blanchard [AI]", abbr: "cb" },
+            { name: "Dusty Farts [AI]", abbr: "df" },
+            { name: "Optoutimus Prime [AI]", abbr: "op" },
+            { name: "Bumbling Bot [AI]", abbr: "bb" }
+        ];
 
         function getDefaultCategories() {
             return {
@@ -24,6 +35,7 @@
           players: [],
           setupIndex: 0,
           nameIndex: 0,
+          botIndex: 0,
           currentPlayerIndex: 0,
           currentCategory: '1', // Tracks current cursor position
           inputMode: 'setup',   // 'setup', 'nav', 'score', or 'confirm_reset'
@@ -189,7 +201,9 @@
             // Phase 1: Initial Roll
             if (state.inputMode === 'nav' && state.rollsLeft === 3) {
                 window.playGameSound('valueTick');
-                window.playBotAudio('bot_think', `${p.name} is thinking...`, () => {
+                const randNum = Math.floor(Math.random() * 3) + 1;
+                const thinkKey = `audio/think_${randNum}${p.abbr || 'bb'}.mp3`;
+                window.playBotAudio(thinkKey, `${p.name} is thinking...`, () => {
                     window.rollDice();
                     const delay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 4500 : 6000);
                     setTimeout(window.handleAITurn, delay);
@@ -238,29 +252,51 @@
                 const available = emptyKeys.filter(k => cats[k].value === null || k === 'B');
 
                 let bestCat = available[0];
-                let bestScore = -1;
+                let bestWeightedScore = -1;
+                const abbr = p.abbr || 'bb';
 
                 available.forEach(k => {
                     const score = window.calculateScore(state.dice, k);
-                    // Weight: 1.5x priority to Upper Section to simulate "Grinder" personality
-                    let weight = ['1','2','3','4','5','6'].includes(k) ? score * 1.5 : score;
-                    if (weight > bestScore) {
-                        bestScore = weight;
+                    let weight = score;
+
+                    // Personality Logic Multipliers
+                    if (abbr === 'ac' || abbr === 'pf') {
+                        if (['1','2','3','4','5','6'].includes(k)) weight = score * 1.6;
+                    } else if (abbr === 'cb' || abbr === 'jv') {
+                        if (k === 'Y' || k === 'L') weight = score * 2.0;
+                    } else if (abbr === 'df' || abbr === 'op') {
+                        // Pessimist: Intentionally scratches hard categories to get them out of the way if rolling bad
+                        if (score === 0 && ['Y', 'L', 'S', 'F'].includes(k)) weight = 8;
+                    } else {
+                        // Balanced / Grinder (Junie, Bumbling)
+                        if (['1','2','3','4','5','6'].includes(k)) weight = score * 1.5;
+                    }
+
+                    if (weight > bestWeightedScore) {
+                        bestWeightedScore = weight;
                         bestCat = k;
                     }
                 });
 
                 state.currentCategory = bestCat;
                 window.renderScorecard();
-                // Announce the selection first so it logs for the screen reader
+                
+                // Calculate true score for audio context
+                const trueScore = window.calculateScore(state.dice, bestCat);
+                let audioPrefix = 'score_';
+                if (trueScore >= 25) audioPrefix = 'score_good_';
+                else if (trueScore === 0) audioPrefix = 'scratch_';
+                
+                const randNum = Math.floor(Math.random() * 3) + 1;
+                const scoreKey = `audio/${audioPrefix}${randNum}${abbr}.mp3`;
+
                 window.playGameSound('valueTick');
-                const scoreStr = bestScore === 0 ? 'a scratch' : `${bestScore} points`;
+                const scoreStr = trueScore === 0 ? 'a scratch' : `${trueScore} points`;
                 window.announce(`${p.name} selects ${cats[bestCat].name} for ${scoreStr}.`);
                 
-                // Wait for ARIA, then play the reaction MP3, THEN dispatch Enter to lock it in
                 const delay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 4500 : 6000);
                 setTimeout(() => {
-                    window.playBotAudio('bot_score', null, () => {
+                    window.playBotAudio(scoreKey, null, () => {
                         const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
                         window.dispatchEvent(enterEvent);
                     });
