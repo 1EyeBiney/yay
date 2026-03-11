@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v1.4.9</title>
+        <title>YAY! v1.5.0</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -370,7 +370,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.4.9 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.5.0 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -506,6 +506,89 @@
             container.insertAdjacentHTML('beforeend', diceHtml);
         };
 
+        window.handleAITurn = function() {
+            const state = window.YAHTZEE_STATE;
+            if (state.gameOver) return;
+            const p = state.players[state.currentPlayerIndex];
+            if (!p.isBot) return;
+
+            // Phase 1: Initial Roll
+            if (state.inputMode === 'nav' && state.rollsLeft === 3) {
+                window.announce(`${p.name} is thinking...`);
+                window.playGameSound('valueTick');
+                setTimeout(() => {
+                    window.rollDice();
+                    setTimeout(window.handleAITurn, 1500);
+                }, 1500);
+                return;
+            }
+
+            // Phase 2: Evaluate Holds & Re-roll
+            if (state.inputMode === 'nav' && state.rollsLeft > 0) {
+                const cats = p.categories;
+                let counts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+                state.dice.forEach(d => counts[d]++);
+                
+                let target = null;
+                // Find highest number that has an open upper category and we have at least one of
+                for (let i = 6; i >= 1; i--) {
+                    if (cats[i.toString()].value === null && counts[i] > 0) {
+                        target = i;
+                        break;
+                    }
+                }
+
+                if (target) {
+                    state.dice.forEach((d, i) => {
+                        state.heldDice[i] = (d === target);
+                    });
+                    window.renderScorecard();
+                    window.playGameSound('hold');
+                    window.announce(`${p.name} holds ${target}s. Rolling...`);
+                } else {
+                    window.announce(`${p.name} holds nothing. Rolling...`);
+                }
+
+                setTimeout(() => {
+                    window.rollDice();
+                    setTimeout(window.handleAITurn, 1500);
+                }, 1500);
+                return;
+            }
+
+            // Phase 3: Placement Selection
+            if (state.inputMode === 'placement') {
+                const cats = p.categories;
+                const emptyKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+                if (cats['Y'].value === 50) emptyKeys.push('B');
+                const available = emptyKeys.filter(k => cats[k].value === null || k === 'B');
+
+                let bestCat = available[0];
+                let bestScore = -1;
+
+                available.forEach(k => {
+                    const score = window.calculateScore(state.dice, k);
+                    // Weight: 1.5x priority to Upper Section to simulate "Grinder" personality
+                    let weight = ['1','2','3','4','5','6'].includes(k) ? score * 1.5 : score;
+                    if (weight > bestScore) {
+                        bestScore = weight;
+                        bestCat = k;
+                    }
+                });
+
+                state.currentCategory = bestCat;
+                window.renderScorecard();
+                window.playGameSound('valueTick');
+                window.announce(`${p.name} selects ${cats[bestCat].name}.`);
+
+                // Trigger the actual 'Enter' logic to lock it in and advance turn
+                setTimeout(() => {
+                    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter' });
+                    window.dispatchEvent(enterEvent);
+                }, 1500);
+            }
+        };
+
         window.addEventListener('keydown', function(e) {
             if (e.key === 'F5') return;
             initAudio();
@@ -535,8 +618,23 @@
                     } else {
                         state.inputMode = 'setup_choice';
                         window.playGameSound('select');
-                        window.announce(`${chosenName} added. Press Enter to add another player, or press S to start the game with ${state.players.length} players.`);
+                        window.announce(`${chosenName} added. Press Enter to add another human player, B to add a Bot, or press S to start the game with ${state.players.length} players.`);
                     }
+                } else if (e.key.toLowerCase() === 'b') {
+                    e.preventDefault();
+                    const botName = "Bumbling Bot [AI]";
+                    state.players.push({ id: state.setupIndex + 1, name: botName, isBot: true, categories: getDefaultCategories() });
+                    
+                    if (state.players.length === 6) {
+                        state.inputMode = 'setup_dice_choice';
+                        window.playGameSound('select');
+                        window.announce("Setup complete. 6 players added. Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
+                    } else {
+                        state.inputMode = 'setup_choice';
+                        window.playGameSound('select');
+                        window.announce(`${botName} added. Press Enter to add another human player, B to add another Bot, or press S to start the game.`);
+                    }
+                    return;
                 }
                 return;
             } else if (state.inputMode === 'setup_choice') {
@@ -546,7 +644,20 @@
                     state.nameIndex = 0;
                     state.inputMode = 'setup';
                     window.playGameSound('select');
-                    window.announce(`Player ${state.setupIndex + 1}, choose name.`);
+                    window.announce(`Player ${state.setupIndex + 1}, choose name. Or press B to add a Bot.`);
+                } else if (e.key.toLowerCase() === 'b') {
+                    const botName = "Bumbling Bot [AI]";
+                    state.players.push({ id: state.setupIndex + 1, name: botName, isBot: true, categories: getDefaultCategories() });
+                    
+                    if (state.players.length === 6) {
+                        state.inputMode = 'setup_dice_choice';
+                        window.playGameSound('select');
+                        window.announce("Setup complete. 6 players added. Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
+                    } else {
+                        state.inputMode = 'setup_choice';
+                        window.playGameSound('select');
+                        window.announce(`${botName} added. Press Enter to add another human player, B to add another Bot, or press S to start the game.`);
+                    }
                 } else if (e.key.toLowerCase() === 's' && state.players.length > 0) {
                     state.inputMode = 'setup_dice_choice';
                     window.playGameSound('select');
@@ -563,6 +674,9 @@
                     window.saveState();
                     window.renderScorecard();
                     window.announce(`Game started. ${state.gameMode} dice mode.${window.getTurnAnnouncement(0)}`);
+                    if (state.players[state.currentPlayerIndex].isBot) {
+                        setTimeout(window.handleAITurn, 2000);
+                    }
                 }
                 return;
             }
@@ -982,6 +1096,9 @@
                     const saveMsg = finalScore === 0 ? `Scratched ${scoredCatName}.` : `${finalScore} points saved in ${scoredCatName}.`;
                     const turnMsg = window.getTurnAnnouncement(state.currentPlayerIndex);
                     window.announce(saveMsg + turnMsg);
+                    if (!state.gameOver && state.players[state.currentPlayerIndex].isBot) {
+                        setTimeout(window.handleAITurn, 2000);
+                    }
                 } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                     if (available.length === 0) return;
                     let idx = available.indexOf(state.currentCategory);
@@ -1042,6 +1159,9 @@
                     const saveMsg = state.tempScore === 0 ? `Scratched ${scoredCatName}.` : `${state.tempScore} points saved in ${scoredCatName}.`;
                     const turnMsg = window.getTurnAnnouncement(state.currentPlayerIndex);
                     window.announce(saveMsg + turnMsg);
+                    if (!state.gameOver && state.players[state.currentPlayerIndex].isBot) {
+                        setTimeout(window.handleAITurn, 2000);
+                    }
                 } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                     const oldScore = state.tempScore;
                     if (category.fixed) {
