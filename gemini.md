@@ -123,3 +123,31 @@ The game requires `window.playGameSound(action)` to be implemented with the foll
 - **Grand Total Hotkey (R)**: Dynamically calculates and announces the active player's grand total from anywhere on the board.
 - **Category Locking**: Inside Navigation Mode, pressing `Enter` on a category where `value !== null` MUST be rejected. Play the `limit` sound and announce "Category already played." When entering Score Mode on a fresh category, force `tempScore = 0` and announce "Scratch, 0".
 - **The Undo Feature (U)**: When a score is committed, record it to `state.lastMove = { playerIndex, categoryKey }`. Pressing `U` checks this memory, reverts the target category to `null`, clears the memory, shifts focus back to that cell, and plays the `undo` sound.
+
+# YAY Dev Log: March 11, 2026
+
+## Current State
+* **Active Version:** v1.4.4
+* **Files Modified:** index.html
+
+## Changelog (What we accomplished)
+* **The Help Menu:** Added a comprehensive audio instruction manual triggered by the `?` key.
+* **The Auto-Scoring Math Engine:** Built `window.calculateScore` to automatically validate Yahtzees, Straights, Full Houses, and all other categories.
+* **The "Two Roads" Master Toggle:** Added a setup prompt allowing players to choose between Digital Dice (Auto-Scoring) or Manual Dice (Physical dice with manual score dialing).
+* **Digital Placement Mode:** In Digital mode, pressing Enter on a category (or running out of rolls) enters a `placement` mode where the Up/Down arrows filter only empty categories and announce auto-calculated score previews.
+* **The Auto-Funnel:** Taking the 3rd roll automatically shifts the game into `placement` mode.
+* **Auto-Turn Progression:** Locking in a score automatically passes the dice to the next player and moves the cursor to their first available empty category.
+* **End Game Detection:** The engine now automatically detects when all 13 rounds are finished, calculates grand totals, announces the winner, and saves the records to the Leaderboard.
+
+## Core Architecture Notes
+* **State Management:** `window.YAHTZEE_STATE` now includes `gameMode` ('digital' or 'manual') and `gameOver` (boolean).
+* **Input Modes:** We now have `setup`, `setup_choice`, `setup_dice_choice`, `nav`, `score` (for manual dialing), `placement` (for auto-scoring previews), and `confirm_reset`.
+* **Game Over Lockdown:** If `state.gameOver` is true, `nav` mode intentionally intercepts and blocks the `D`, `Enter`, `U`, and hold keys to protect the final board state, while still allowing arrow keys for review.
+* **Leaderboard Names:** The `gameRecord` object specifically loops through all active players during a game over or a valid `Q` reset to save everyone's name, score, and date to `state.history` and `state.topScores`.
+
+## Known Issues (What is still broken)
+* The game logic and keyboard interface are pristine, but the UI is not yet optimized for iOS VoiceOver touch controls.
+
+## Next Steps for Tomorrow
+* **Feature:** Build the Mobile VoiceOver Touchpad interface so the game can be played via swiping and double-tapping on an iPhone screen.
+* **Suggested Starting Prompt:** `@workspace Please read gemini.md and index.html. We are on v1.4.4. Our next goal is to build an on-screen grid of buttons (Up, Down, Roll, Hold 1-5, Enter) that only appears on mobile screens to allow iOS VoiceOver users to play without a physical keyboard. Please suggest the HTML/CSS structure for this mobile control pad.`

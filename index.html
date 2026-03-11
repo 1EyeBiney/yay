@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v1.4.2</title>
+        <title>YAY! v1.4.4</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -196,6 +196,7 @@
           currentCategory: '1', // Tracks current cursor position
           inputMode: 'setup',   // 'setup', 'nav', 'score', or 'confirm_reset'
           gameMode: 'manual',
+          gameOver: false,
           tempScore: 0,         // Tracks the number being dialed in 'score' mode
           lastMove: null,
           history: [],          // Array of last 5 game objects
@@ -249,6 +250,49 @@
             }
         };
 
+        window.checkGameOver = function() {
+            const state = window.YAHTZEE_STATE;
+            const baseKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+            const isOver = state.players.every(p => baseKeys.every(k => p.categories[k].value !== null));
+
+            if (isOver) {
+                state.gameOver = true;
+                const dateStr = new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit'}) + ', ' + new Date().toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'});
+                let highestScore = -1;
+                let winnerName = "";
+                let results = [];
+
+                state.players.forEach(p => {
+                    const pCats = p.categories;
+                    const upperSub = ['1', '2', '3', '4', '5', '6'].reduce((sum, k) => sum + (pCats[k].value || 0), 0);
+                    const bonus = upperSub >= 63 ? 35 : 0;
+                    const lowerTotal = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'].reduce((sum, k) => sum + (pCats[k].value || 0), 0);
+                    const grandTotal = upperSub + bonus + lowerTotal;
+
+                    if (grandTotal > highestScore) { highestScore = grandTotal; winnerName = p.name; }
+
+                    const gameRecord = { name: p.name, score: grandTotal, date: dateStr };
+                    state.history.unshift(gameRecord);
+                    state.topScores.push(gameRecord);
+                    results.push(`${p.name} scored ${grandTotal}`);
+                });
+
+                if (state.history.length > 5) state.history.length = 5;
+                state.topScores.sort((a, b) => b.score - a.score);
+                if (state.topScores.length > 10) state.topScores.length = 10;
+
+                window.playGameSound('startup');
+                state.inputMode = 'nav';
+                window.saveState();
+                window.renderScorecard();
+
+                const resultStr = results.join('. ');
+                window.announce(`Game Over! ${winnerName} wins with ${highestScore} points! ${resultStr}. Press Q to start a new game, or use arrow keys to review the board.`);
+                return true;
+            }
+            return false;
+        };
+
         window.rollDice = function() {
             const state = window.YAHTZEE_STATE;
             if (state.rollsLeft > 0) {
@@ -288,7 +332,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.4.2 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.4.4 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -520,6 +564,17 @@
             const category = state.players[state.currentPlayerIndex].categories[state.currentCategory];
 
             if (state.inputMode === 'nav') {
+                if (state.gameOver) {
+                    const blockedKeys = ['d', 'enter', 'u'];
+                    const holdKeys = ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB'];
+                    if (blockedKeys.includes(e.key.toLowerCase()) || holdKeys.includes(e.code)) {
+                        e.preventDefault();
+                        window.playGameSound('limit');
+                        window.announce("Game is over. Review the board with arrows, or press Q to reset.");
+                        return;
+                    }
+                }
+
                 // Help Menu (?)
                 if (e.key === '?') {
                     e.preventDefault();
@@ -534,7 +589,7 @@
                     if (state.history.length === 0) {
                         window.announce("No game history available.");
                     } else {
-                        const historyStr = state.history.map(h => `${h.score} points, ${h.date}`).join('. ');
+                        const historyStr = state.history.map(h => `${h.name}, ${h.score} points, ${h.date}`).join('. ');
                         window.announce(`Last ${state.history.length} games: ${historyStr}.`);
                     }
                     return;
@@ -547,7 +602,7 @@
                     if (state.topScores.length === 0) {
                         window.announce("No top scores yet.");
                     } else {
-                        const topStr = state.topScores.map((s, i) => `Number ${i+1}, ${s.score} points, ${s.date}`).join('. ');
+                        const topStr = state.topScores.map((s, i) => `Number ${i+1}, ${s.name}, ${s.score} points, ${s.date}`).join('. ');
                         window.announce(`Top Scores: ${topStr}.`);
                     }
                     return;
@@ -836,16 +891,30 @@
                     window.renderScorecard();
                 } else if (e.key === 'Enter') {
                     const finalScore = window.calculateScore(state.dice, state.currentCategory);
-                    state.lastMove = { playerIndex: state.currentPlayerIndex, categoryKey: state.currentCategory };
                     cats[state.currentCategory].value = finalScore;
+                    state.lastMove = { playerIndex: state.currentPlayerIndex, categoryKey: state.currentCategory };
+                    const scoredCatName = cats[state.currentCategory].name;
+
                     state.rollsLeft = 3;
                     state.heldDice = [false, false, false, false, false];
                     state.dice = [1, 1, 1, 1, 1];
+
+                    if (window.checkGameOver()) return; // Stop turn progression if game is over
+
+                    // Advance Turn & Find Next Empty Category
+                    state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+                    const nextCats = state.players[state.currentPlayerIndex].categories;
+                    const fullKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+                    state.currentCategory = fullKeys.find(k => nextCats[k].value === null) || '1';
+
                     window.playGameSound('save');
                     state.inputMode = 'nav';
                     window.saveState();
                     window.renderScorecard();
-                    window.announce(finalScore === 0 ? `Scratched ${cats[state.currentCategory].name}.` : `${finalScore} points saved in ${cats[state.currentCategory].name}.`);
+
+                    const saveMsg = finalScore === 0 ? `Scratched ${scoredCatName}.` : `${finalScore} points saved in ${scoredCatName}.`;
+                    const turnMsg = state.players.length > 1 ? ` ${state.players[state.currentPlayerIndex].name}'s turn. ${nextCats[state.currentCategory].name}, empty.` : ` Next turn. ${nextCats[state.currentCategory].name}, empty.`;
+                    window.announce(saveMsg + turnMsg);
                 } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                     if (available.length === 0) return;
                     let idx = available.indexOf(state.currentCategory);
@@ -873,17 +942,30 @@
                     window.announce("Cancelled.");
                     window.renderScorecard();
                 } else if (e.key === 'Enter') {
-                    state.lastMove = { playerIndex: state.currentPlayerIndex, categoryKey: state.currentCategory };
                     category.value = state.tempScore;
+                    state.lastMove = { playerIndex: state.currentPlayerIndex, categoryKey: state.currentCategory };
+                    const scoredCatName = category.name;
+
                     state.rollsLeft = 3;
                     state.heldDice = [false, false, false, false, false];
                     state.dice = [1, 1, 1, 1, 1];
+
+                    if (window.checkGameOver()) return; // Stop turn progression if game is over
+
+                    // Advance Turn & Find Next Empty Category
+                    state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.length;
+                    const nextCats = state.players[state.currentPlayerIndex].categories;
+                    const fullKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+                    state.currentCategory = fullKeys.find(k => nextCats[k].value === null) || '1';
+
                     window.playGameSound('save');
                     state.inputMode = 'nav';
-                    window.saveState(); // Save on commit
+                    window.saveState();
                     window.renderScorecard();
-                    const saveMsg = state.tempScore === 0 ? `Scratched ${category.name}.` : `${state.tempScore} points saved in ${category.name}.`;
-                    window.announce(saveMsg);
+
+                    const saveMsg = state.tempScore === 0 ? `Scratched ${scoredCatName}.` : `${state.tempScore} points saved in ${scoredCatName}.`;
+                    const turnMsg = state.players.length > 1 ? ` ${state.players[state.currentPlayerIndex].name}'s turn. ${nextCats[state.currentCategory].name}, empty.` : ` Next turn. ${nextCats[state.currentCategory].name}, empty.`;
+                    window.announce(saveMsg + turnMsg);
                 } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                     const oldScore = state.tempScore;
                     if (category.fixed) {
@@ -914,24 +996,25 @@
                     window.playGameSound('cancel');
                     window.announce("Reset cancelled.");
                 } else if (e.key.toLowerCase() === 'y') {
-                    // Calculate Final Score
-                    const upperKeys = ['1', '2', '3', '4', '5', '6'];
-                    const lowerKeys = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'];
-                    const cats = state.players[state.currentPlayerIndex].categories;
-                    const upperSub = upperKeys.reduce((sum, k) => sum + (cats[k].value || 0), 0);
-                    const bonus = upperSub >= 63 ? 35 : 0;
-                    const lower = lowerKeys.reduce((sum, k) => sum + (cats[k].value || 0), 0);
-                    const grandTotal = upperSub + bonus + lower;
+                    if (!state.gameOver) {
+                        const dateStr = new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit'}) + ', ' + new Date().toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'});
 
-                    // Update History
-                    const gameRecord = { score: grandTotal, date: new Date().toLocaleTimeString('en-US', {hour: 'numeric', minute:'2-digit'}) + ', ' + new Date().toLocaleDateString('en-US', {weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'}) };
-                    state.history.unshift(gameRecord);
-                    if (state.history.length > 5) state.history.pop();
+                        state.players.forEach(p => {
+                            const pCats = p.categories;
+                            const upperSub = ['1', '2', '3', '4', '5', '6'].reduce((sum, k) => sum + (pCats[k].value || 0), 0);
+                            const bonus = upperSub >= 63 ? 35 : 0;
+                            const lowerTotal = ['T', 'F', 'H', 'S', 'L', 'Y', 'C', 'B'].reduce((sum, k) => sum + (pCats[k].value || 0), 0);
+                            const grandTotal = upperSub + bonus + lowerTotal;
 
-                    // Update Leaderboard
-                    state.topScores.push(gameRecord);
-                    state.topScores.sort((a, b) => b.score - a.score);
-                    if (state.topScores.length > 10) state.topScores.pop();
+                            const gameRecord = { name: p.name, score: grandTotal, date: dateStr };
+                            state.history.unshift(gameRecord);
+                            state.topScores.push(gameRecord);
+                        });
+
+                        if (state.history.length > 5) state.history.length = 5;
+                        state.topScores.sort((a, b) => b.score - a.score);
+                        if (state.topScores.length > 10) state.topScores.length = 10;
+                    }
 
                     // True Hard Reset
                     state.players = [];
@@ -940,6 +1023,7 @@
                     state.currentPlayerIndex = 0;
                     state.currentCategory = '1';
                     state.gameMode = 'manual';
+                    state.gameOver = false;
                     state.dice = [1, 1, 1, 1, 1];
                     state.heldDice = [false, false, false, false, false];
                     state.rollsLeft = 3;
