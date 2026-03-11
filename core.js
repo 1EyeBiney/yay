@@ -1,4 +1,4 @@
-/* core.js - v2.1.1 */
+/* core.js - v2.1.2 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         function getDefaultCategories() {
@@ -36,7 +36,8 @@
           dice: [1, 1, 1, 1, 1],
           heldDice: [false, false, false, false, false],
           rollsLeft: 3,
-          speechRate: 'fast'
+          speechRate: 'fast',
+          aiVoiceMuted: false
         };
 
         window.calculateScore = function(dice, categoryKey) {

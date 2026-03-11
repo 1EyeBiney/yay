@@ -1,4 +1,4 @@
-/* audio.js - v2.1.0 */
+/* audio.js - v2.1.2 */
         window.audioCtx = null;
         function initAudio() { 
             if(!window.audioCtx) { window.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } 
@@ -77,7 +77,7 @@
                 setTimeout(() => { if (callback) callback(); }, delay);
             };
 
-            if (!path) {
+            if (!path || window.YAHTZEE_STATE.aiVoiceMuted) {
                 executeFallback();
                 return;
             }

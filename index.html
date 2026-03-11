@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v2.1.1</title>
+        <title>YAY! v2.1.2</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -121,7 +121,7 @@
     <script src="audio.js"></script>
     <script src="core.js"></script>
     <script>
-        /* index.html logic - v2.1.1 */
+        /* index.html logic - v2.1.2 */
         window.announce = function(msg) {
             const el = document.getElementById('aria-announce');
             if (el) {
@@ -137,7 +137,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 2.1.1 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 2.1.2 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -161,6 +161,7 @@
                         window.YAHTZEE_STATE.rollsLeft = 3;
                     }
                     if (!window.YAHTZEE_STATE.speechRate) window.YAHTZEE_STATE.speechRate = 'fast';
+                    if (typeof window.YAHTZEE_STATE.aiVoiceMuted === 'undefined') window.YAHTZEE_STATE.aiVoiceMuted = false;
                     window.announce("Yes! Accessible Yahtzee version 1.4.0. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {
                     console.warn("Cleared incompatible save file:", e.message);
@@ -184,8 +185,9 @@
             if (existingControls) existingControls.remove();
             
             const displayRate = state.speechRate.charAt(0).toUpperCase() + state.speechRate.slice(1);
+            const voiceState = state.aiVoiceMuted ? 'Muted' : 'On';
             const controlsHtml = `<div id="controls-bar" style="text-align: right; margin-bottom: 10px; font-size: 1rem; color: #888;">
-                Speech Rate: ${displayRate} (Press P to toggle)
+                Speech Rate: ${displayRate} (P) | AI Voice: ${voiceState} (M)
             </div>`;
             container.insertAdjacentHTML('beforeend', controlsHtml);
 
@@ -380,12 +382,6 @@
                 return;
             }
 
-            if (e.key.toLowerCase() === 'm') {
-                e.preventDefault();
-                window.playGameSound('startup');
-                return; // Stop any other logic, NO ARIA announcement.
-            }
-
             // Developer Shortcuts (Ctrl + Shift)
             if (e.ctrlKey && e.shiftKey) {
                 if (e.code === 'Digit1') {
@@ -462,6 +458,17 @@
                     state.speechRate = rates[(idx + 1) % rates.length];
                     window.playGameSound('select');
                     window.announce(`AI pacing set to ${state.speechRate}.`);
+                    window.renderScorecard();
+                    window.saveState();
+                    return;
+                }
+
+                // AI Voice Mute Toggle (M)
+                if (e.key.toLowerCase() === 'm') {
+                    e.preventDefault();
+                    state.aiVoiceMuted = !state.aiVoiceMuted;
+                    window.playGameSound('select');
+                    window.announce(`AI voice lines ${state.aiVoiceMuted ? 'muted' : 'enabled'}.`);
                     window.renderScorecard();
                     window.saveState();
                     return;
