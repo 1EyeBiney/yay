@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v1.3.8.1</title>
+        <title>YAY! v1.3.9.1</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -116,7 +116,7 @@
     <div id="game-container" tabindex="0" role="application" aria-label="Yahtzee Scorecard.">
         <h1 style="text-align: center;">Yahtzee Scorecard</h1>
     </div>
-    <div id="aria-announce" class="sr-only" aria-live="assertive"></div>
+    <div id="aria-announce" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
 
     <script>
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
@@ -211,7 +211,10 @@
         window.announce = function(msg) {
             const el = document.getElementById('aria-announce');
             if (el) {
-                el.textContent = msg;
+                el.textContent = ''; // Clear it first
+                setTimeout(() => { 
+                    el.textContent = msg; 
+                }, 50); // Inject after a tiny delay to force screen reader recognition
             }
         };
 
@@ -234,7 +237,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.3.8.1 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 1.3.9.1 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Choose.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -257,7 +260,7 @@
                         window.YAHTZEE_STATE.heldDice = [false, false, false, false, false];
                         window.YAHTZEE_STATE.rollsLeft = 3;
                     }
-                    window.announce("Yes! Accessible Yahtzee version 1.3.8.1. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.announce("Yes! Accessible Yahtzee version 1.3.9.1. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {
                     console.warn("Cleared incompatible save file:", e.message);
                     localStorage.removeItem('YAHTZEE_DATA'); // Clear the bad data
@@ -457,6 +460,14 @@
             const category = state.players[state.currentPlayerIndex].categories[state.currentCategory];
 
             if (state.inputMode === 'nav') {
+                // Help Menu (?)
+                if (e.key === '?') {
+                    e.preventDefault();
+                    window.playGameSound('select');
+                    window.announce("Help Menu. Here are the keyboard controls for Accessible Yahtzee. Navigation: Use the Up and Down arrows to move through the scorecard. Left and Right arrows switch between players. Page Up and Page Down jump directly to the total and subtotal rows. Scoring: Press Enter on an empty category to start scoring. Use the Up and Down arrows to dial in your score. Hold Shift with the arrows to jump 5 points at a time. Press Enter again to save. Press Escape to cancel. Dice Controls: Press D to roll the dice. To toggle holding or releasing a die, use the letters on the bottom row: Z for Die 1, X for Die 2, C for Die 3, V for Die 4, and B for Die 5. Press I to inspect your current dice and remaining rolls. Category Shortcuts: The numbers 1 through 6 put you directly on those upper section categories. Many of the lower section categories use first letter association: T for Three of a Kind. F for Four of a Kind. H for Full House. S for Small Straight. L for Large Straight. Y for Yahtzee. A for Chance. And B for Yahtzee Bonus. Game Tools: Press G to hear a list of your remaining open categories. Press R to read the current player's grand total. Press U to undo your last score. Press O for the top score leaderboard. Press E for your recent game history. And press Q to end the game and reset the board. High all-time scores will be saved.");
+                    return;
+                }
+
                 // History (E)
                 if (e.key.toLowerCase() === 'e') {
                     e.preventDefault();
