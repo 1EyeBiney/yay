@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>YAY! v2.3.1</title>
+        <title>YAY! v2.4.0</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -122,6 +123,7 @@
     <script src="core.js"></script>
     <script>
         /* index.html logic - v2.3.1 */
+        /* index.html logic - v2.4.0 */
         window.announce = function(msg) {
             const el = document.getElementById('aria-announce');
             if (el) {
@@ -138,6 +140,7 @@
             const container = document.getElementById('game-container');
             container.focus();
             window.announce("Yes!, Accessible Yahtzee, YAY! version 2.3.1 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
+            window.announce("Yes!, Accessible Yahtzee, YAY! version 2.4.0 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
