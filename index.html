@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! v2.3.1</title>
-        <title>YAY! v2.4.0</title>
+        <title>YAY! Accessible Dice v2.5.0</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -114,16 +113,15 @@
 </head>
 <body>
     <button id="initBtn" autofocus onclick="initGame()">Press Enter to Begin</button>
-    <div id="game-container" tabindex="0" role="application" aria-label="Application: YAY! Accessible Yahtzee">
-        <h1 style="text-align: center;">Yahtzee Scorecard</h1>
+    <div id="game-container" tabindex="0" role="application" aria-label="Application: YAY! Accessible Dice">
+        <h1 style="text-align: center;">YAY! Scorecard</h1>
     </div>
     <div id="aria-announce" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
 
     <script src="audio.js"></script>
     <script src="core.js"></script>
     <script>
-        /* index.html logic - v2.3.1 */
-        /* index.html logic - v2.4.0 */
+        /* index.html logic - v2.5.0 */
         window.announce = function(msg) {
             const el = document.getElementById('aria-announce');
             if (el) {
@@ -139,8 +137,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 2.3.1 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
-            window.announce("Yes!, Accessible Yahtzee, YAY! version 2.4.0 initialized. Choose the name of Player 1. Use up and down arrows, then Enter to Begin.");
+            window.announce("Welcome to YAY! Accessible Dice, version 2.5.0. Press Enter to add a human player, or press B to add a Bot.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -166,7 +163,7 @@
                     if (!window.YAHTZEE_STATE.speechRate) window.YAHTZEE_STATE.speechRate = 'fast';
                     if (typeof window.YAHTZEE_STATE.aiVoiceMuted === 'undefined') window.YAHTZEE_STATE.aiVoiceMuted = false;
                     if (!window.YAHTZEE_STATE.audioBags) window.YAHTZEE_STATE.audioBags = {};
-                    window.announce("Yes! Accessible Yahtzee version 1.4.0. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.announce("YAY! Accessible Dice version 2.5.0. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {
                     console.warn("Cleared incompatible save file:", e.message);
                     localStorage.removeItem('YAHTZEE_DATA'); // Clear the bad data
@@ -464,7 +461,7 @@
                 if (e.key === '?') {
                     e.preventDefault();
                     window.playGameSound('select');
-                    window.announce("Help Menu. Here are the keyboard controls for Accessible Yahtzee. Navigation: Use the Up and Down arrows to move through the scorecard. Left and Right arrows switch between players. Page Up and Page Down jump directly to the total and subtotal rows. Scoring: Press Enter on an empty category to start scoring. Use the Up and Down arrows to dial in your score. Hold Shift with the arrows to jump 5 points at a time. Press Enter again to save. Press Escape to cancel. Dice Controls: Press D to roll the dice. To toggle holding or releasing a die, use the letters on the bottom row: Z for Die 1, X for Die 2, C for Die 3, V for Die 4, and B for Die 5. Press I to inspect your current dice and remaining rolls. Category Shortcuts: The numbers 1 through 6 put you directly on those upper section categories. Many of the lower section categories use first letter association: T for Three of a Kind. F for Four of a Kind. H for Full House. S for Small Straight. L for Large Straight. Y for Yahtzee. A for Chance. And B for Yahtzee Bonus. Game Tools: Press G to hear a list of your remaining open categories. Press R to read the current player's grand total. Press U to undo your last score. Press O for the top score leaderboard. Press E for your recent game history. And press Q to end the game and reset the board. High all-time scores will be saved.");
+                    window.announce("Help Menu. Here are the keyboard controls for YAY! Accessible Dice. Navigation: Use the Up and Down arrows to move through the scorecard. Left and Right arrows switch between players. Page Up and Page Down jump directly to the total and subtotal rows. Scoring: Press Enter on an empty category to start scoring. Use the Up and Down arrows to dial in your score. Hold Shift with the arrows to jump 5 points at a time. Press Enter again to save. Press Escape to cancel. Dice Controls: Press D to roll the dice. To toggle holding or releasing a die, use the letters on the bottom row: Z for Die 1, X for Die 2, C for Die 3, V for Die 4, and B for Die 5. Press I to inspect your current dice and remaining rolls. Category Shortcuts: The numbers 1 through 6 put you directly on those upper section categories. Many of the lower section categories use first letter association: T for Three of a Kind. F for Four of a Kind. H for Full House. S for Small Straight. L for Large Straight. Y for YAY!. A for Chance. And B for Yahtzee Bonus. Game Tools: Press G to hear a list of your remaining open categories. Press R to read the current player's grand total. Press U to undo your last score. Press O for the top score leaderboard. Press E for your recent game history. And press Q to end the game and reset the board. High all-time scores will be saved.");
                     return;
                 }
 

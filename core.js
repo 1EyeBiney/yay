@@ -1,4 +1,4 @@
-/* core.js - v2.3.1 */
+/* core.js - v2.5.0 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -25,7 +25,7 @@
                 H: { name: "Full House", value: null, fixed: [0, 25] },
                 S: { name: "Small Straight", value: null, fixed: [0, 30] },
                 L: { name: "Large Straight", value: null, fixed: [0, 40] },
-                Y: { name: "Yahtzee", value: null, fixed: [0, 50] },
+                Y: { name: "YAY!", value: null, description: "5 of a kind (50 pts)", fixed: [0, 50] },
                 C: { name: "Chance", value: null, max: 30, step: 1 },
                 B: { name: "Yahtzee Bonus", value: 0, max: 300, step: 100, locked: true } 
             };
