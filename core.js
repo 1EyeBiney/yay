@@ -1,4 +1,4 @@
-/* core.js - v2.5.0 */
+/* core.js - v2.8.1 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -9,7 +9,11 @@
             { name: "Curtis Blanchard [AI]", abbr: "cb" },
             { name: "Dusty Farts [AI]", abbr: "df" },
             { name: "Optoutimus Prime [AI]", abbr: "op" },
-            { name: "Bumbling Bot [AI]", abbr: "bb" }
+            { name: "Bumbling Bot [AI]", abbr: "bb" },
+            { name: "Johnny Dynamite [AI]", abbr: "jd" },
+            { name: "Countess Spatula [AI]", abbr: "cs" },
+            { name: "Lady Gwendolyn [AI]", abbr: "lg" },
+            { name: "Freddy Fingers [AI]", abbr: "ff" }
         ];
 
         function getDefaultCategories() {
@@ -89,6 +93,12 @@
             localStorage.setItem('YAHTZEE_DATA', JSON.stringify(window.YAHTZEE_STATE));
         };
 
+
+
+
+
+
+
         window.checkGameOver = function() {
             const state = window.YAHTZEE_STATE;
             const baseKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
@@ -133,6 +143,7 @@
         };
 
         window.getTurnAnnouncement = function(playerIndex) {
+
             const state = window.YAHTZEE_STATE;
             const p = state.players[playerIndex];
             const cats = p.categories;
@@ -155,12 +166,16 @@
             }
 
             const actionPrompt = state.gameMode === 'digital' ? "Press D to roll dice." : "Press Enter to set score.";
+
             return ` ${p.name}, score ${grandTotal}. ${listStr}. ${actionPrompt}`;
+
         };
 
         window.rollDice = function() {
             const state = window.YAHTZEE_STATE;
+
             if (state.rollsLeft > 0) {
+
                 state.dice = state.dice.map((d, i) => state.heldDice[i] ? d : Math.ceil(Math.random() * 6));
                 state.rollsLeft--;
                 window.playGameSound('roll');
@@ -201,6 +216,7 @@
 
             // Phase 1: Initial Roll
             if (state.inputMode === 'nav' && state.rollsLeft === 3) {
+
                 window.playGameSound('valueTick');
                 const thinkKey = window.getGrabBagAudio(p.abbr || 'bb', 'think');
                 window.playBotAudio(thinkKey, `${p.name} is thinking...`, () => {
@@ -215,6 +231,7 @@
 
             // Phase 2: Evaluate Holds & Re-roll
             if (state.inputMode === 'nav' && state.rollsLeft > 0) {
+
                 const cats = p.categories;
                 let counts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
                 state.dice.forEach(d => counts[d]++);
@@ -248,6 +265,7 @@
 
             // Phase 3: Placement Selection
             if (state.inputMode === 'placement') {
+
                 const cats = p.categories;
                 const emptyKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
                 if (cats['Y'].value === 50) emptyKeys.push('B');

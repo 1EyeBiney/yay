@@ -1,11 +1,15 @@
-/* audio.js - v2.3.0 */
+/* audio.js - v2.8.1 */
 
         // The master limits for the Grab Bag based on the CSV
         window.AUDIO_COUNTS = {
-            'intro': 3, 'start': 3, 'think': 8, 'hold': 3, 'standard': 6,
+            'intro': 3, 'start': 3, 'roll': 3, 'think': 8, 'hold': 3, 'standard': 6,
             'excellent': 3, 'botscratch': 3, 'botyahtzee': 2, 'botbonus': 3,
             'grief': 4, 'humanyahtzee': 2, 'humanscratch': 3, 'botlead': 3,
             'behind': 3, 'passed': 3, 'passes': 3, 'wins': 3, 'loses': 4
+            , 'jd_roll': 3, 'jd_think': 8, 'jd_score': 8, 'jd_wins': 5, 'jd_loses': 5, 'jd_ad': 5
+            , 'cs_roll': 3, 'cs_think': 8, 'cs_score': 8, 'cs_wins': 5, 'cs_loses': 5
+            , 'lg_roll': 3, 'lg_think': 8, 'lg_score': 8, 'lg_wins': 5, 'lg_loses': 5
+            , 'ff_roll': 3, 'ff_think': 8, 'ff_score': 8, 'ff_wins': 5, 'ff_loses': 5
         };
    
         // The Shuffle Bag logic
@@ -16,7 +20,7 @@
    
             // Refill bag if empty or doesn't exist
             if (!state.audioBags[bagKey] || state.audioBags[bagKey].length === 0) {
-                const maxCount = window.AUDIO_COUNTS[actionType] || 3;
+                const maxCount = window.AUDIO_COUNTS[bagKey] || window.AUDIO_COUNTS[actionType] || 3;
                 let newBag = [];
                 for (let i = 1; i <= maxCount; i++) newBag.push(i);
    
