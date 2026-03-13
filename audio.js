@@ -1,4 +1,4 @@
-/* audio.js - v2.6.0 */
+/* audio.js - v2.3.0 */
 
         // The master limits for the Grab Bag based on the CSV
         window.AUDIO_COUNTS = {
@@ -139,24 +139,5 @@
                 console.warn("Audio Play Error:", e);
                 window.activeBotAudio = null;
                 executeFallback();
-            });
-        };
-
-        window.DICE_AUDIO_BUFFER = [];
-        window.playDiceAudio = function() {
-            const totalSounds = 6;
-            let available = [];
-            for (let i = 1; i <= totalSounds; i++) {
-                if (!window.DICE_AUDIO_BUFFER.includes(i)) available.push(i);
-            }
-            
-            const selected = available[Math.floor(Math.random() * available.length)];
-            window.DICE_AUDIO_BUFFER.push(selected);
-            if (window.DICE_AUDIO_BUFFER.length > 2) window.DICE_AUDIO_BUFFER.shift();
-            
-            const audio = new Audio(`audio/dice_${selected}.mp3`);
-            audio.play().catch(e => {
-                // Fallback to synth tone if MP3 is missing
-                if (window.playGameSound) window.playGameSound('roll');
             });
         };
