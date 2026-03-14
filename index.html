@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <title>YAY! Accessible Dice v3.2.0</title>
     <style>
         /* CSS for high contrast dark mode */
@@ -136,7 +136,7 @@
             window.playGameSound('startup');
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
-            container.focus();
+            container.focus();           
             window.announce("Welcome to YAY! Accessible Dice, version 3.2.0. Press Enter to add a human player, or press B to add a Bot.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
@@ -164,7 +164,7 @@
                     if (typeof window.YAHTZEE_STATE.aiVoiceMuted === 'undefined') window.YAHTZEE_STATE.aiVoiceMuted = false;
                     if (!window.YAHTZEE_STATE.audioBags) window.YAHTZEE_STATE.audioBags = {};
                     window.announce("YAY! Accessible Dice version 3.2.0. Previous game restored. Press Up or Down arrows to navigate.");
-                } catch (e) {
+                } catch (e) {                    
                     console.warn("Cleared incompatible save file:", e.message);
                     localStorage.removeItem('YAHTZEE_DATA'); // Clear the bad data
                     window.YAHTZEE_STATE.inputMode = 'setup';
