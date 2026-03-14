@@ -1,4 +1,4 @@
-/* core.js - v2.9.0 */
+/* core.js - v3.0.0 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -226,30 +226,118 @@
                 return;
             }
 
-            // Phase 2: Evaluate Holds & Re-roll
+            // Phase 2: Evaluate Holds & Re-roll (v3.0.0 Pattern Recognition)
             if (state.inputMode === 'nav' && state.rollsLeft > 0) {
 
                 const cats = p.categories;
-                let counts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+                const counts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
                 state.dice.forEach(d => counts[d]++);
-                
-                let target = null;
-                // Find highest number that has an open upper category and we have at least one of
-                for (let i = 6; i >= 1; i--) {
-                    if (cats[i.toString()].value === null && counts[i] > 0) {
-                        target = i;
-                        break;
+                const sorted = [...new Set(state.dice)].sort((a,b) => a - b);
+
+                let holdDecision = null; // { indices: [...], label: string }
+
+                // --- Priority A: Multiples (Yahtzee / 4-of-a-Kind / 3-of-a-Kind) ---
+                for (let face = 6; face >= 1; face--) {
+                    if (counts[face] >= 3) {
+                        const yahtzeeOpen = cats['Y'].value === null;
+                        const fourOpen = cats['F'].value === null;
+                        const threeOpen = cats['T'].value === null;
+                        const upperOpen = cats[face.toString()].value === null;
+                        if (yahtzeeOpen || fourOpen || threeOpen || upperOpen) {
+                            holdDecision = {
+                                indices: state.dice.map((d, i) => d === face ? i : -1).filter(i => i !== -1),
+                                label: `${counts[face]} ${face}s`
+                            };
+                            break;
+                        }
                     }
                 }
 
-                if (target) {
-                    state.dice.forEach((d, i) => {
-                        state.heldDice[i] = (d === target);
-                    });
+                // --- Priority B: Straights ---
+                if (!holdDecision) {
+                    const largeOpen = cats['L'].value === null;
+                    const smallOpen = cats['S'].value === null;
+                    if (largeOpen || smallOpen) {
+                        // Find longest sequential run in sorted unique values
+                        let bestRun = [sorted[0]];
+                        let curRun = [sorted[0]];
+                        for (let i = 1; i < sorted.length; i++) {
+                            if (sorted[i] === sorted[i-1] + 1) {
+                                curRun.push(sorted[i]);
+                            } else {
+                                if (curRun.length > bestRun.length) bestRun = curRun;
+                                curRun = [sorted[i]];
+                            }
+                        }
+                        if (curRun.length > bestRun.length) bestRun = curRun;
+
+                        if (bestRun.length >= 3) {
+                            const runSet = new Set(bestRun);
+                            holdDecision = {
+                                indices: [],
+                                label: `a run of ${bestRun.length}`
+                            };
+                            // Hold one die per face in the run
+                            const held = new Set();
+                            state.dice.forEach((d, i) => {
+                                if (runSet.has(d) && !held.has(d)) {
+                                    holdDecision.indices.push(i);
+                                    held.add(d);
+                                }
+                            });
+                        }
+                    }
+                }
+
+                // --- Priority C: Full House ---
+                if (!holdDecision && cats['H'].value === null) {
+                    let pairFace = null, tripFace = null;
+                    const pairs = [];
+                    for (let face = 6; face >= 1; face--) {
+                        if (counts[face] >= 3 && !tripFace) tripFace = face;
+                        else if (counts[face] >= 2) pairs.push(face);
+                    }
+                    if (tripFace && pairs.length > 0) {
+                        pairFace = pairs[0];
+                        holdDecision = {
+                            indices: state.dice.map((d, i) => (d === tripFace || d === pairFace) ? i : -1).filter(i => i !== -1),
+                            label: `full house ${tripFace}s and ${pairFace}s`
+                        };
+                    } else if (pairs.length >= 2) {
+                        const keep = new Set(pairs.slice(0, 2));
+                        holdDecision = {
+                            indices: state.dice.map((d, i) => keep.has(d) ? i : -1).filter(i => i !== -1),
+                            label: `two pair ${pairs[0]}s and ${pairs[1]}s`
+                        };
+                    }
+                }
+
+                // --- Priority D (Fallback): Highest open upper section ---
+                if (!holdDecision) {
+                    let target = null;
+                    for (let i = 6; i >= 1; i--) {
+                        if (cats[i.toString()].value === null && counts[i] > 0) {
+                            target = i;
+                            break;
+                        }
+                    }
+                    if (target) {
+                        holdDecision = {
+                            indices: state.dice.map((d, i) => d === target ? i : -1).filter(i => i !== -1),
+                            label: `${target}s`
+                        };
+                    }
+                }
+
+                // Apply hold decision
+                if (holdDecision) {
+                    state.heldDice = [false, false, false, false, false];
+                    holdDecision.indices.forEach(i => { state.heldDice[i] = true; });
                     window.renderScorecard();
                     window.playGameSound('hold');
-                    window.announce(`${p.name} holds ${target}s. Rolling...`);
+                    window.announce(`${p.name} holds ${holdDecision.label}. Rolling...`);
                 } else {
+                    state.heldDice = [false, false, false, false, false];
                     window.announce(`${p.name} holds nothing. Rolling...`);
                 }
 
