@@ -1,4 +1,4 @@
-/* core.js - v3.5.0 */
+/* core.js - v3.7.0 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -333,8 +333,14 @@
 
                 } else {
 
+                    // Dynamic Risk Thresholds (Mid-Turn Pivoting)
+                    // On final roll (rollsLeft === 1), hold ANY pair instead of just 4s, 5s, 6s.
+                    const minPairFace = state.rollsLeft === 1 ? 1 : 4; 
+                    // On final roll, abandon 3-dice straights and only chase if we have 4.
+                    const minRunLength = state.rollsLeft === 1 ? 4 : 3; 
+
                     for (let face = 6; face >= 1; face--) {
-                        if (counts[face] >= 3 || (counts[face] === 2 && face >= 4 && cats[face.toString()].value === null)) {
+                        if (counts[face] >= 3 || (counts[face] === 2 && face >= minPairFace && cats[face.toString()].value === null)) {
                             const yahtzeeOpen = cats['Y'].value === null;
                             const fourOpen = cats['F'].value === null;
                             const threeOpen = cats['T'].value === null;
@@ -367,7 +373,7 @@
                             }
                             if (curRun.length > bestRun.length) bestRun = curRun;
 
-                            if (bestRun.length >= 3) {
+                            if (bestRun.length >= minRunLength) {
                                 const runSet = new Set(bestRun);
                                 holdDecision = {
                                     indices: [],
