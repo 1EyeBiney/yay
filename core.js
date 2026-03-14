@@ -1,4 +1,4 @@
-/* core.js - v3.0.0 */
+/* core.js - v3.1.2 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -360,28 +360,40 @@
                 let bestWeightedScore = -1;
                 const abbr = p.abbr || 'bb';
 
-                available.forEach(k => {
-                    const score = window.calculateScore(state.dice, k);
-                    let weight = score;
+                const maxBaseScore = Math.max(...available.map(k => window.calculateScore(state.dice, k)));
 
-                    // Personality Logic Multipliers
-                    if (abbr === 'ac' || abbr === 'pf') {
-                        if (['1','2','3','4','5','6'].includes(k)) weight = score * 1.6;
-                    } else if (abbr === 'cb' || abbr === 'jv') {
-                        if (k === 'Y' || k === 'L') weight = score * 2.0;
-                    } else if (abbr === 'df' || abbr === 'op') {
-                        // Pessimist: Intentionally scratches hard categories to get them out of the way if rolling bad
-                        if (score === 0 && ['Y', 'L', 'S', 'F'].includes(k)) weight = 8;
-                    } else {
-                        // Balanced / Grinder (Junie, Bumbling)
-                        if (['1','2','3','4','5','6'].includes(k)) weight = score * 1.5;
+                if (maxBaseScore === 0) {
+                    const SCRATCH_PRIORITY = ['1', '2', '3', '4', 'F', 'T', '5', 'S', '6', 'L', 'H', 'Y'];
+                    for (const cat of SCRATCH_PRIORITY) {
+                        if (available.includes(cat)) {
+                            bestCat = cat;
+                            break;
+                        }
                     }
+                } else {
+                    available.forEach(k => {
+                        const score = window.calculateScore(state.dice, k);
+                        let weight = score;
 
-                    if (weight > bestWeightedScore) {
-                        bestWeightedScore = weight;
-                        bestCat = k;
-                    }
-                });
+                        // Personality Logic Multipliers
+                        if (abbr === 'ac' || abbr === 'pf') {
+                            if (['1','2','3','4','5','6'].includes(k)) weight = score * 1.6;
+                        } else if (abbr === 'cb' || abbr === 'jv') {
+                            if (k === 'Y' || k === 'L') weight = score * 2.0;
+                        } else if (abbr === 'df' || abbr === 'op') {
+                            // Pessimist: Intentionally scratches hard categories to get them out of the way if rolling bad
+                            if (score === 0 && ['Y', 'L', 'S', 'F'].includes(k)) weight = 8;
+                        } else {
+                            // Balanced / Grinder (Junie, Bumbling)
+                            if (['1','2','3','4','5','6'].includes(k)) weight = score * 1.5;
+                        }
+
+                        if (weight > bestWeightedScore) {
+                            bestWeightedScore = weight;
+                            bestCat = k;
+                        }
+                    });
+                }
 
                 state.currentCategory = bestCat;
                 window.renderScorecard();
@@ -398,7 +410,7 @@
                 const scoreStr = trueScore === 0 ? 'a scratch' : `${trueScore} points`;
                 window.announce(`${p.name} selects ${cats[bestCat].name} for ${scoreStr}.`);
                 
-                const baseDelay = state.speechRate === 'fast' ? 2000 : (state.speechRate === 'medium' ? 3500 : 5000);
+                const baseDelay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 5000 : 7000);
                 const randomVariance = Math.floor(Math.random() * 2000) - 1000; // +/- 1 second
                 const delay = baseDelay + randomVariance;
                 setTimeout(() => {

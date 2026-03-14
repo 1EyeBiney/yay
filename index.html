@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>YAY! Accessible Dice v3.0.0</title>
+        <title>YAY! Accessible Dice v3.1.2</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -137,7 +137,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();
-            window.announce("Welcome to YAY! Accessible Dice, version 3.0.0. Press Enter to add a human player, or press B to add a Bot.");
+            window.announce("Welcome to YAY! Accessible Dice, version 3.1.2. Press Enter to add a human player, or press B to add a Bot.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -163,7 +163,7 @@
                     if (!window.YAHTZEE_STATE.speechRate) window.YAHTZEE_STATE.speechRate = 'fast';
                     if (typeof window.YAHTZEE_STATE.aiVoiceMuted === 'undefined') window.YAHTZEE_STATE.aiVoiceMuted = false;
                     if (!window.YAHTZEE_STATE.audioBags) window.YAHTZEE_STATE.audioBags = {};
-                    window.announce("YAY! Accessible Dice version 3.0.0. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.announce("YAY! Accessible Dice version 3.1.2. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {
                     console.warn("Cleared incompatible save file:", e.message);
                     localStorage.removeItem('YAHTZEE_DATA'); // Clear the bad data
@@ -390,7 +390,7 @@
                     window.renderScorecard();
                     window.announce(`Game started. ${state.gameMode} dice mode.${window.getTurnAnnouncement(0)}`);
                     if (state.players[state.currentPlayerIndex].isBot) {
-                        const botDelay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 4500 : 6000);
+                        const botDelay = state.speechRate === 'fast' ? 6500 : (state.speechRate === 'medium' ? 9000 : 11500);
                         setTimeout(window.handleAITurn, botDelay);
                     }
                 }
@@ -863,7 +863,7 @@
                     const turnMsg = window.getTurnAnnouncement(state.currentPlayerIndex);
                     window.announce(saveMsg + turnMsg);
                     if (!state.gameOver && state.players[state.currentPlayerIndex].isBot) {
-                        const botDelay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 4500 : 6000);
+                        const botDelay = state.speechRate === 'fast' ? 6500 : (state.speechRate === 'medium' ? 9000 : 11500);
                         setTimeout(window.handleAITurn, botDelay);
                     }
                 } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -949,7 +949,7 @@
                     const turnMsg = window.getTurnAnnouncement(state.currentPlayerIndex);
                     window.announce(saveMsg + turnMsg);
                     if (!state.gameOver && state.players[state.currentPlayerIndex].isBot) {
-                        const botDelay = state.speechRate === 'fast' ? 3000 : (state.speechRate === 'medium' ? 4500 : 6000);
+                        const botDelay = state.speechRate === 'fast' ? 6500 : (state.speechRate === 'medium' ? 9000 : 11500);
                         setTimeout(window.handleAITurn, botDelay);
                     }
                 } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
