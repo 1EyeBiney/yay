@@ -1,4 +1,4 @@
-/* core.js - v3.7.0 */
+/* core.js - v3.8.0 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -491,6 +491,18 @@
 
                 const maxBaseScore = Math.max(...available.map(k => window.calculateScore(state.dice, k)));
 
+                const botArchetypes = {
+                    'jd': 'gambler',
+                    'cs': 'sniper',
+                    'lg': 'aristocrat',
+                    'ff': 'hustler',
+                    'ac': 'grinder', 'pf': 'grinder',
+                    'cb': 'dreamer', 'jv': 'dreamer',
+                    'df': 'pessimist', 'op': 'pessimist'
+                };
+                const archetype = botArchetypes[abbr] || 'balanced';
+
+
                 if (maxBaseScore === 0) {
                     const SCRATCH_PRIORITY = ['1', '2', '3', '4', 'F', 'T', '5', 'S', '6', 'L', 'H', 'Y'];
                     for (const cat of SCRATCH_PRIORITY) {
@@ -504,21 +516,39 @@
                         const score = window.calculateScore(state.dice, k);
                         let weight = score;
 
-                        // Personality Logic Multipliers
-                        if (abbr === 'ac' || abbr === 'pf') {
-                            if (['1','2','3','4','5','6'].includes(k)) weight = score * 1.6;
-                        } else if (abbr === 'cb' || abbr === 'jv') {
-                            if (k === 'Y' || k === 'L') weight = score * 2.0;
-                        } else if (abbr === 'df' || abbr === 'op') {
-                            // Pessimist: Intentionally scratches hard categories to get them out of the way if rolling bad
-                            if (score === 0 && ['Y', 'L', 'S', 'F'].includes(k)) weight = 8;
-                        } else {
-                            // Balanced / Grinder (Junie, Bumbling)
-                            if (['1','2','3','4','5','6'].includes(k)) weight = score * 1.5;
+                        // Personality Logic Multipliers                    
+                        switch (archetype) {
+                            case 'gambler':
+                                if (['Y', 'L'].includes(k)) weight = score * 2.5;
+                                if (k === 'C') weight = score * 0.5;
+                                break;
+                            case 'sniper':
+                                if (['5', '6'].includes(k)) weight = score * 2.0;
+                                if (k === 'H') weight = score * 1.5;
+                                break;
+                            case 'aristocrat':
+                                if (['F', 'T', 'C'].includes(k)) weight = score * 1.8;
+                                break;
+                            case 'hustler':
+                                if (['S', 'H', '4', '3'].includes(k)) weight = score * 1.8;
+                                break;
+                            case 'grinder':
+                                if (['1', '2', '3', '4', '5', '6'].includes(k)) weight = score * 1.6;
+                                break;
+                            case 'dreamer':
+                                if (['Y', 'L'].includes(k)) weight = score * 2.0;
+                                break;
+                            case 'pessimist':
+                                if (score === 0 && ['Y', 'L', 'S', 'F'].includes(k)) weight = 8;
+                                break;
+                            case 'balanced':
+                            default:
+                                if (['1', '2', '3', '4', '5', '6'].includes(k)) weight = score * 1.5;
+                                break;
                         }
 
                         // Upper Bonus Awareness
-                        if (['1', '2', '3', '4', '5', '6'].includes(k)) {
+                       if (['1', '2', '3', '4', '5', '6'].includes(k)) {
                             if (currentUpper + score >= 63) {
                                 weight += 50; // Secures the bonus
                             } else if (score >= parseInt(k) * 3) {

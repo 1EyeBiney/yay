@@ -4,3 +4,4 @@
 • Endgame Desperation (Panic Mode): The bots have a turn counter. When they are down to their last 3 empty categories, they put blinders on. They bypass their standard logic and ruthlessly hold only the specific dice they need to fill those remaining slots.
 • Scoreboard Awareness: The bots have an ego and know the score. If they are losing to a human by 40 or more points, they switch to a high-risk mode, swinging for the fences to hunt Yahtzees. If they are winning by 40 or more, they play it incredibly safe to protect their lead.
 • Opponent Board Awareness (Card Counting): The bots actively read the human's scorecard. If they notice the leading human player is "choked"—meaning they only have difficult categories like Yahtzee or Straights left open—the bot will disable its own panic mode and play conservatively, 
+• Pivot their holding strategies mid-turn based on remaining rolls.
