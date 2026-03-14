@@ -1,9 +1,9 @@
-/* audio.js - v2.8.1 */
+/* audio.js - v2.9.0 */
 
         // The master limits for the Grab Bag based on the CSV
         window.AUDIO_COUNTS = {
             'intro': 3, 'start': 3, 'roll': 3, 'think': 8, 'hold': 3, 'standard': 6,
-            'excellent': 3, 'botscratch': 3, 'botyahtzee': 2, 'botbonus': 3,
+            'excellent': 3, 'botscratch': 3, 'botyahtzee': 2, 'botbonus': 3, 'dice': 6,
             'grief': 4, 'humanyahtzee': 2, 'humanscratch': 3, 'botlead': 3,
             'behind': 3, 'passed': 3, 'passes': 3, 'wins': 3, 'loses': 4
             , 'jd_roll': 3, 'jd_think': 8, 'jd_score': 8, 'jd_wins': 5, 'jd_loses': 5, 'jd_ad': 5
@@ -87,7 +87,10 @@
                 case 'undo': playSequence(['sine','sine','sine'], [1046.50, 783.99, 523.25], 0.1, 0.4); break;
                 case 'cancel': playTone('sine', 440, 220, 0.1, 0.4); break;
                 case 'limit': playTone('sine', 220, 110, 0.1, 0.5); break;
-                case 'roll': [0, 300, 600, 900, 1100, 1300, 1500].forEach((t, i) => { setTimeout(() => playTone('sine', 600, null, 0.08 - i*0.008, 0.2 - i*0.025), t); }); break;
+                case 'roll': 
+                    const path = window.getGrabBagAudio('', 'dice');
+                    new Audio(path).play().catch(e => console.warn(e));
+                    break;
                 case 'hold': playTone('sine', 400, 700, 0.1, 0.2); break;
                 case 'release': playTone('sine', 700, 400, 0.1, 0.2); break;
                 case 'valueTick': playSequence(['sine','sine','sine'], [100, 200, 300], 0.05, 0.3); break;

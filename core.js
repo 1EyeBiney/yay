@@ -1,4 +1,4 @@
-/* core.js - v2.8.1 */
+/* core.js - v2.9.0 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -7,9 +7,6 @@
             { name: "Junie Byte [AI]", abbr: "jb" },
             { name: "Pearlie Fae [AI]", abbr: "pf" },
             { name: "Curtis Blanchard [AI]", abbr: "cb" },
-            { name: "Dusty Farts [AI]", abbr: "df" },
-            { name: "Optoutimus Prime [AI]", abbr: "op" },
-            { name: "Bumbling Bot [AI]", abbr: "bb" },
             { name: "Johnny Dynamite [AI]", abbr: "jd" },
             { name: "Countess Spatula [AI]", abbr: "cs" },
             { name: "Lady Gwendolyn [AI]", abbr: "lg" },
