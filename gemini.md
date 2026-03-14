@@ -249,3 +249,24 @@ window.YAHTZEE_STATE = {
   aiVoiceMuted: false,
   audioBags: {} // State for Shuffle Bag non-repeating audio logic
 };
+# YAY Dev Log: March 14, 2026 (The AI Brain Overhaul)
+
+## Current State
+* **Active Version:** v3.4.0
+* **Files Modified:** index.html, core.js, audio.js
+
+## Changelog (What we accomplished)
+* **v3.0.0 - Pattern Recognition (Phase 2):** Rewrote the AI holding logic. Bots now actively look for Straights, Full Houses, and Multiples before falling back to holding single high numbers. They also check if the target category is actually empty (`cats[key].value === null`) before chasing a pattern.
+* **v3.1.0 - Scratch Hierarchy (Phase 3):** If a bot's best possible score is 0, it bypasses its personality multipliers and scratches based on a strict priority array (`['1', '2', '3', '4', 'F', 'T', '5', 'S', '6', 'L', 'H', 'Y']`) to protect high-value targets.
+* **v3.1.2 - Audio Pacing:** Fine-tuned `botDelay` and `baseDelay` transition timers to prevent the bot's MP3 audio from bleeding over the screen reader's `aria-live` TTS announcements.
+* **v3.2.0 - Upper Bonus Awareness:** Bots calculate their `currentUpper` subtotal. If a placement secures the 63-point threshold, `weight += 50`. If it stays on pace (scores $\ge$ 3 of a kind), `weight += 15`. Bots also aggressively hold pairs of 4s, 5s, and 6s to chase the bonus.
+* **v3.3.0 - Endgame Desperation:** If a bot has $\le 3$ empty categories remaining, it enters "Panic Mode." It bypasses standard hold priorities and exclusively holds dice that build toward its specific remaining categories.
+* **v3.4.0 - Scoreboard Awareness:** Bots calculate the `differential` between their score and the leading human player. If trailing by 40+, they take massive risks (Yahtzee `weight += 100`, Large Straight `weight += 50`). If leading by 40+, they play conservatively (Upper section/Chance `weight += 20`).
+
+## Core Architecture Notes
+* **The Heuristic Engine:** The AI is not a machine learning model; it uses strict conditional logic in `window.handleAITurn`. 
+* **Performance Constraints:** All array manipulations (`filter`, `reduce`, `Set`) used in the Phase 2/Phase 3 AI logic were heavily optimized to ensure the browser's main thread does not hang and interrupt the screen reader.
+
+## Next Steps for Tomorrow
+* **Feature:** Now that the core logic is incredibly smart, we need to assign specific mathematical risk/reward personalities to the four new voice actors (Johnny Dynamite, Countess Spatula, Lady Gwendolyn, and Freddy Fingers) in Phase 3 of `core.js`. Right now, they all default to the "Grinder" archetype.
+* **Suggested Starting Prompt:** `@workspace Please read gemini.md and core.js. We are on v3.4.0. I want to assign unique personality multipliers to the new bots in Phase 3 of window.handleAITurn. For example, Johnny Dynamite ('jd') should be a Gambler, and Lady Gwendolyn ('lg') should be highly conservative.`

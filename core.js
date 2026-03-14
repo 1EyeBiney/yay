@@ -1,4 +1,4 @@
-/* core.js - v3.4.0 */
+/* core.js - v3.5.0 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -469,6 +469,20 @@
                 const bestHumanScore = humans.length > 0 ? Math.max(...humans.map(getScore)) : 0;
                 const differential = myScore - bestHumanScore;
 
+                let humanChoked = false;
+                if (humans.length > 0) {
+                    // Find the human with the highest score
+                    const bestHuman = humans.reduce((best, h) => getScore(h) > getScore(best) ? h : best, humans[0]);
+                    const hCats = bestHuman.categories;
+                    const hOpen = ['1','2','3','4','5','6','T','F','H','S','L','Y','C'].filter(k => hCats[k].value === null);
+                    // If they have 3 or fewer categories, and NONE of them are "easy" safe points
+                    const easyCats = ['1','2','3','4','5','6','C','T'];
+                    const hasEasy = hOpen.some(k => easyCats.includes(k));
+                    if (hOpen.length <= 3 && !hasEasy) {
+                        humanChoked = true;
+                    }
+                }
+
                 const maxBaseScore = Math.max(...available.map(k => window.calculateScore(state.dice, k)));
 
                 if (maxBaseScore === 0) {
@@ -507,11 +521,11 @@
                         }
 
                         // Scoreboard Awareness
-                        if (differential <= -40) {
+                        if (differential <= -40 && !humanChoked) {
                             // Losing badly: swing for the fences
                             if (k === 'Y' && score > 0) weight += 100;
                             if (k === 'L' && score > 0) weight += 50;
-                        } else if (differential >= 40) {
+                        } else if (differential >= 40 || humanChoked) {
                             // Winning comfortably: play it safe
                             if (['1','2','3','4','5','6','C'].includes(k) && score > 0) weight += 20;
                         }
