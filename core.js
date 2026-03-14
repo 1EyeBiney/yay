@@ -1,4 +1,4 @@
-/* core.js - v3.1.2 */
+/* core.js - v3.2.0 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -238,7 +238,7 @@
 
                 // --- Priority A: Multiples (Yahtzee / 4-of-a-Kind / 3-of-a-Kind) ---
                 for (let face = 6; face >= 1; face--) {
-                    if (counts[face] >= 3) {
+                    if (counts[face] >= 3 || (counts[face] === 2 && face >= 4 && cats[face.toString()].value === null)) {
                         const yahtzeeOpen = cats['Y'].value === null;
                         const fourOpen = cats['F'].value === null;
                         const threeOpen = cats['T'].value === null;
@@ -359,6 +359,7 @@
                 let bestCat = available[0];
                 let bestWeightedScore = -1;
                 const abbr = p.abbr || 'bb';
+                const currentUpper = ['1', '2', '3', '4', '5', '6'].reduce((sum, key) => sum + (cats[key].value || 0), 0);
 
                 const maxBaseScore = Math.max(...available.map(k => window.calculateScore(state.dice, k)));
 
@@ -386,6 +387,15 @@
                         } else {
                             // Balanced / Grinder (Junie, Bumbling)
                             if (['1','2','3','4','5','6'].includes(k)) weight = score * 1.5;
+                        }
+
+                        // Upper Bonus Awareness
+                        if (['1', '2', '3', '4', '5', '6'].includes(k)) {
+                            if (currentUpper + score >= 63) {
+                                weight += 50; // Secures the bonus
+                            } else if (score >= parseInt(k) * 3) {
+                                weight += 15; // Stays on pace (3 of a kind)
+                            }
                         }
 
                         if (weight > bestWeightedScore) {
