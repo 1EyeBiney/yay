@@ -1,4 +1,4 @@
-/* core.js - v3.2.0 */
+/* core.js - v3.4.0 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -458,6 +458,17 @@
                 const abbr = p.abbr || 'bb';
                 const currentUpper = ['1', '2', '3', '4', '5', '6'].reduce((sum, key) => sum + (cats[key].value || 0), 0);
 
+                const getScore = (player) => {
+                    const u = ['1','2','3','4','5','6'].reduce((s, k) => s + (player.categories[k].value || 0), 0);
+                    const b = u >= 63 ? 35 : 0;
+                    const l = ['T','F','H','S','L','Y','C','B'].reduce((s, k) => s + (player.categories[k].value || 0), 0);
+                    return u + b + l;
+                };
+                const myScore = getScore(p);
+                const humans = state.players.filter(pl => !pl.isBot);
+                const bestHumanScore = humans.length > 0 ? Math.max(...humans.map(getScore)) : 0;
+                const differential = myScore - bestHumanScore;
+
                 const maxBaseScore = Math.max(...available.map(k => window.calculateScore(state.dice, k)));
 
                 if (maxBaseScore === 0) {
@@ -493,6 +504,16 @@
                             } else if (score >= parseInt(k) * 3) {
                                 weight += 15; // Stays on pace (3 of a kind)
                             }
+                        }
+
+                        // Scoreboard Awareness
+                        if (differential <= -40) {
+                            // Losing badly: swing for the fences
+                            if (k === 'Y' && score > 0) weight += 100;
+                            if (k === 'L' && score > 0) weight += 50;
+                        } else if (differential >= 40) {
+                            // Winning comfortably: play it safe
+                            if (['1','2','3','4','5','6','C'].includes(k) && score > 0) weight += 20;
                         }
 
                         if (weight > bestWeightedScore) {
