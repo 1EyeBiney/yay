@@ -1,4 +1,4 @@
-/* core.js - v3.8.0 */
+/* core.js - v3.9.2 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -215,8 +215,11 @@
             if (state.inputMode === 'nav' && state.rollsLeft === 3) {
 
                 window.playGameSound('valueTick');
+                const baseKeys = ['1', '2', '3', '4', '5', '6', 'T', 'F', 'H', 'S', 'L', 'Y', 'C'];
+                const currentTurn = baseKeys.filter(k => p.categories[k].value !== null).length + 1;
+                window.announce(`Turn ${currentTurn}.`);
                 const thinkKey = window.getGrabBagAudio(p.abbr || 'bb', 'think');
-                window.playBotAudio(thinkKey, `${p.name} is thinking...`, () => {
+                window.playBotAudio(thinkKey, `Turn ${currentTurn}. ${p.name} is thinking...`, () => {
                     window.rollDice();
                     const baseDelay = state.speechRate === 'fast' ? 2000 : (state.speechRate === 'medium' ? 3500 : 5000);
                     const randomVariance = Math.floor(Math.random() * 2000) - 1000; // +/- 1 second
