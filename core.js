@@ -1,4 +1,4 @@
-/* core.js - v3.9.2 */
+/* core.js - v3.10.0 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -236,6 +236,21 @@
                 const counts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
                 state.dice.forEach(d => counts[d]++);
                 const sorted = [...new Set(state.dice)].sort((a,b) => a - b);
+
+                // --- PRIME DIRECTIVE: Accidental Gift (Brain Mode Early Stop) ---
+                if (p.isBrainMode) {
+                    const hasY = cats['Y'].value === null && window.calculateScore(state.dice, 'Y') === 50;
+                    const hasH = cats['H'].value === null && window.calculateScore(state.dice, 'H') === 25;
+                    const hasS = cats['S'].value === null && cats['L'].value !== null && window.calculateScore(state.dice, 'S') === 30; 
+                    const hasL = cats['L'].value === null && window.calculateScore(state.dice, 'L') === 40;
+                    if (hasY || hasH || hasS || hasL) {
+                        state.rollsLeft = 0;
+                        state.inputMode = 'placement';
+                        window.announce(`${p.name} stops rolling early. Perfect roll detected.`);
+                        setTimeout(window.handleAITurn, delay);
+                        return;
+                    }
+                }
 
                 let holdDecision = null; // { indices: [...], label: string }
 
@@ -518,6 +533,26 @@
                     available.forEach(k => {
                         const score = window.calculateScore(state.dice, k);
                         let weight = score;
+
+                        // --- PRIME DIRECTIVES: Brain Mode Weight Overrides ---
+                        if (p.isBrainMode) {
+                            const counts = {1:0, 2:0, 3:0, 4:0, 5:0, 6:0};
+                            state.dice.forEach(d => counts[d]++);
+
+                            // 1, 2, 3: God-Tier Locks
+                            if (k === 'Y' && score === 50) weight += 100000;
+                            if (k === 'B' && score === 100) weight += 100000;
+                            if (k === 'L' && score === 40) weight += 100000;
+
+                            // 5: Chance Conservation
+                            if (k === 'C' && score < 20) weight -= 50;
+
+                            // 6: Bonus Protector
+                            if (['5', '6'].includes(k) && counts[parseInt(k)] >= 4) weight += 10000;
+
+                            // 7: Trash Redirect
+                            if (['T', 'F'].includes(k) && score > 0 && score < 10) weight -= 50;
+                        }
 
                         // Personality Logic Multipliers                    
                         switch (archetype) {

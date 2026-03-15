@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        <title>YAY! Accessible Dice v3.9.2</title>
+        <title>YAY! Accessible Dice v3.10.0</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -137,7 +137,7 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();           
-            window.announce("Welcome to YAY! Accessible Dice, version 3.9.2. Press Enter to add a human player, or press B to add a Bot.");
+            window.announce("Welcome to YAY! Accessible Dice, version 3.10.0. Press Enter to add a human player, or press B to add a Bot.");
             
             container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
             
@@ -163,7 +163,7 @@
                     if (!window.YAHTZEE_STATE.speechRate) window.YAHTZEE_STATE.speechRate = 'fast';
                     if (typeof window.YAHTZEE_STATE.aiVoiceMuted === 'undefined') window.YAHTZEE_STATE.aiVoiceMuted = false;
                     if (!window.YAHTZEE_STATE.audioBags) window.YAHTZEE_STATE.audioBags = {};
-                    window.announce("YAY! Accessible Dice version 3.9.2. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.announce("YAY! Accessible Dice version 3.10.0. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {                    
                     console.warn("Cleared incompatible save file:", e.message);
                     localStorage.removeItem('YAHTZEE_DATA'); // Clear the bad data
@@ -320,9 +320,10 @@
                 } else if (e.key.toLowerCase() === 'b') {
                     e.preventDefault();
                     state.botIndex = 0;
+                    state.setupBotBrainMode = true;
                     state.inputMode = 'setup_bot_choice';
                     window.playGameSound('select');
-                    window.announce(`Select AI opponent. ${window.BOT_LIBRARY[state.botIndex].name}. Use up and down arrows, then Enter to select.`);
+                    window.announce(`Select AI opponent. ${window.BOT_LIBRARY[state.botIndex].name}. Brain mode is ON. Press Space to toggle Easy mode. Use up and down arrows, then Enter to select.`);
                     return;
                 }
                 return;
@@ -337,9 +338,10 @@
                 } else if (e.key.toLowerCase() === 'b') {
                     e.preventDefault();
                     state.botIndex = 0;
+                    state.setupBotBrainMode = true;
                     state.inputMode = 'setup_bot_choice';
                     window.playGameSound('select');
-                    window.announce(`Select AI opponent. ${window.BOT_LIBRARY[state.botIndex].name}. Use up and down arrows, then Enter to select.`);
+                    window.announce(`Select AI opponent. ${window.BOT_LIBRARY[state.botIndex].name}. Brain mode is ON. Press Space to toggle Easy mode. Use up and down arrows, then Enter to select.`);
                     return;
                 } else if (e.key.toLowerCase() === 's' && state.players.length > 0) {
                     state.inputMode = 'setup_dice_choice';
@@ -357,9 +359,15 @@
                     }
                     window.playGameSound('nav');
                     window.announce(window.BOT_LIBRARY[state.botIndex].name);
+                } else if (e.code === 'Space') {
+                    e.preventDefault();
+                    state.setupBotBrainMode = !state.setupBotBrainMode;
+                    window.playGameSound('select');
+                    window.announce(state.setupBotBrainMode ? "Brain mode ON. Expert AI." : "Easy mode ON. Standard AI.");
+                    return;
                 } else if (e.key === 'Enter') {
                     const bot = window.BOT_LIBRARY[state.botIndex];
-                    state.players.push({ id: state.setupIndex + 1, name: bot.name, isBot: true, abbr: bot.abbr, categories: getDefaultCategories() });
+                    state.players.push({ id: state.setupIndex + 1, name: bot.name, isBot: true, abbr: bot.abbr, isBrainMode: state.setupBotBrainMode, categories: getDefaultCategories() });
                     
                     const introKey = `audio/intro_1${bot.abbr}.mp3`;
                     window.playBotAudio(introKey, `${bot.name} added.`, () => {
