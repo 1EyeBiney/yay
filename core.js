@@ -1,4 +1,4 @@
-/* core.js - v3.10.0 */
+/* core.js - v3.11.0 */
         const NAME_LIBRARY = ["Aces Adventurer", "Bouncing Bones", "Bumbling Bonus", "Chance Master", "Daring Dicer", "Dice Dynamo", "Fumble Finger", "Gambit Goblin", "Giggling Gambler", "Jolly Jiggler", "Pocket Pirate", "Roly Poly Roller", "Silly Shaker", "Straight Shooter", "Triple Threat", "Tumbling Titan", "Turbo Tumbler", "Victory Viper", "Wild Winner", "Yahtzee Yahoo"];
 
         window.BOT_LIBRARY = [
@@ -162,7 +162,7 @@
                 listStr = empty.map(k => cats[k].name + " empty").join(', ');
             }
 
-            const actionPrompt = state.gameMode === 'digital' ? "Press D to roll dice." : "Press Enter to set score.";
+            const actionPrompt = state.gameMode === 'digital' ? "Press D or spacebar to roll dice." : "Press Enter to set score.";
 
             return ` ${p.name}, score ${grandTotal}. ${listStr}. ${actionPrompt}`;
 

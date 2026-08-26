@@ -121,15 +121,48 @@
     <script src="audio.js"></script>
     <script src="core.js"></script>
     <script>
-        /* index.html logic - v2.8.2 */
+        /* index.html logic - v3.11.0 */
         window.announce = function(msg) {
             const el = document.getElementById('aria-announce');
             if (el) {
                 el.textContent = ''; // Clear it first
-                setTimeout(() => { 
-                    el.textContent = msg; 
+                setTimeout(() => {
+                    el.textContent = msg;
                 }, 50); // Inject after a tiny delay to force screen reader recognition
             }
+        };
+
+        // Repeats the "add another player" instructions while the player is on the
+        // setup_choice screen (first repeat at 7s, then every 10s), since Escape
+        // doesn't leave that screen and there was previously no way to hear the
+        // instructions again.
+        window._setupChoiceReminder = null;
+        window.clearSetupChoiceReminder = function() {
+            if (window._setupChoiceReminder) {
+                clearTimeout(window._setupChoiceReminder.timeoutId);
+                clearInterval(window._setupChoiceReminder.intervalId);
+            }
+            window._setupChoiceReminder = null;
+        };
+        window.startSetupChoiceReminder = function(message) {
+            window.clearSetupChoiceReminder();
+            const reminder = { message, timeoutId: null, intervalId: null };
+            reminder.timeoutId = setTimeout(() => {
+                if (window.YAHTZEE_STATE.inputMode !== 'setup_choice') return;
+                window.announce(reminder.message);
+                reminder.intervalId = setInterval(() => {
+                    if (window.YAHTZEE_STATE.inputMode !== 'setup_choice') {
+                        window.clearSetupChoiceReminder();
+                        return;
+                    }
+                    window.announce(reminder.message);
+                }, 10000);
+            }, 7000);
+            window._setupChoiceReminder = reminder;
+        };
+        window.buildSetupChoiceMessage = function(prefix) {
+            const n = window.YAHTZEE_STATE.players.length;
+            return `${prefix}Press Enter to add another human player, press B to add a Bot, or press S to start the game with ${n} player${n === 1 ? '' : 's'}. When adding a Bot, pressing Spacebar toggles between Easy and Brain mode.`;
         };
 
         window.initGame = function() {
@@ -137,9 +170,14 @@
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();           
-            window.announce("Welcome to YAY! Accessible Dice, version 3.10.0. Press Enter to add a human player, or press B to add a Bot.");
+            window.announce("Welcome to YAY! Accessible Dice, version 3.11.0. YAY! Player Setup. Use arrow keys to choose the player name for the first human player. Use up and down arrows to move through the list and enter to select the name of player 1. The names you choose for human players do not affect game play.");
             
-            container.addEventListener('blur', () => setTimeout(() => container.focus(), 10));
+            container.addEventListener('blur', () => {
+                // F6 (browser pane-cycling) intentionally sends focus outside the
+                // container; let it go instead of yanking focus back.
+                if (window._allowFocusLeave) { window._allowFocusLeave = false; return; }
+                setTimeout(() => container.focus(), 10);
+            });
             
             // Hydration
             const saved = localStorage.getItem('YAHTZEE_DATA');
@@ -163,7 +201,7 @@
                     if (!window.YAHTZEE_STATE.speechRate) window.YAHTZEE_STATE.speechRate = 'fast';
                     if (typeof window.YAHTZEE_STATE.aiVoiceMuted === 'undefined') window.YAHTZEE_STATE.aiVoiceMuted = false;
                     if (!window.YAHTZEE_STATE.audioBags) window.YAHTZEE_STATE.audioBags = {};
-                    window.announce("YAY! Accessible Dice version 3.10.0. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.announce("YAY! Accessible Dice version 3.11.0. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {                    
                     console.warn("Cleared incompatible save file:", e.message);
                     localStorage.removeItem('YAHTZEE_DATA'); // Clear the bad data
@@ -288,6 +326,7 @@
 
         window.addEventListener('keydown', function(e) {
             if (e.key === 'F5') return;
+            if (e.key === 'F6') { window._allowFocusLeave = true; return; }
             initAudio();
             const state = window.YAHTZEE_STATE;
             
@@ -307,7 +346,7 @@
                 } else if (e.key === 'Enter') {
                     const chosenName = NAME_LIBRARY[state.nameIndex];
                     state.players.push({ id: state.setupIndex + 1, name: chosenName, categories: getDefaultCategories() });
-                    
+
                     if (state.players.length === 6) {
                         state.inputMode = 'setup_dice_choice';
                         window.playGameSound('select');
@@ -315,7 +354,9 @@
                     } else {
                         state.inputMode = 'setup_choice';
                         window.playGameSound('select');
-                        window.announce(`${chosenName} added. Press Enter to add another human player, B to add a Bot, or press S to start the game with ${state.players.length} players.`);
+                        const msg = window.buildSetupChoiceMessage(`${chosenName} added. `);
+                        window.announce(msg);
+                        window.startSetupChoiceReminder(msg);
                     }
                 } else if (e.key.toLowerCase() === 'b') {
                     e.preventDefault();
@@ -325,11 +366,23 @@
                     window.playGameSound('select');
                     window.announce(`Select AI opponent. ${window.BOT_LIBRARY[state.botIndex].name}. Brain mode is ON. Press Space to toggle Easy mode. Use up and down arrows, then Enter to select.`);
                     return;
+                } else if (e.key === 'Escape') {
+                    if (state.players.length > 0) {
+                        state.inputMode = 'setup_choice';
+                        window.playGameSound('cancel');
+                        const msg = window.buildSetupChoiceMessage('Back to player options. ');
+                        window.announce(msg);
+                        window.startSetupChoiceReminder(msg);
+                    } else {
+                        window.playGameSound('limit');
+                        window.announce("This is the first player. There is nothing to go back to.");
+                    }
                 }
                 return;
             } else if (state.inputMode === 'setup_choice') {
                 e.preventDefault();
                 if (e.key === 'Enter') {
+                    window.clearSetupChoiceReminder();
                     state.setupIndex++;
                     state.nameIndex = 0;
                     state.inputMode = 'setup';
@@ -337,6 +390,7 @@
                     window.announce(`Player ${state.setupIndex + 1}, choose name. Or press B to add a Bot.`);
                 } else if (e.key.toLowerCase() === 'b') {
                     e.preventDefault();
+                    window.clearSetupChoiceReminder();
                     state.botIndex = 0;
                     state.setupBotBrainMode = true;
                     state.inputMode = 'setup_bot_choice';
@@ -344,9 +398,24 @@
                     window.announce(`Select AI opponent. ${window.BOT_LIBRARY[state.botIndex].name}. Brain mode is ON. Press Space to toggle Easy mode. Use up and down arrows, then Enter to select.`);
                     return;
                 } else if (e.key.toLowerCase() === 's' && state.players.length > 0) {
+                    window.clearSetupChoiceReminder();
                     state.inputMode = 'setup_dice_choice';
                     window.playGameSound('select');
                     window.announce("Press D to play with Digital Dice and Auto-Scoring, or press M to play with Manual physical dice.");
+                } else if (e.key === 'Escape') {
+                    const removed = state.players.pop();
+                    state.setupIndex = state.players.length;
+                    state.nameIndex = 0;
+                    state.inputMode = 'setup';
+                    window.clearSetupChoiceReminder();
+                    window.playGameSound('cancel');
+                    window.announce(`Removed ${removed.name}. Player ${state.setupIndex + 1}, choose name. Or press B to add a Bot.`);
+                } else if (!['Shift', 'Control', 'Alt', 'Meta', 'CapsLock', 'Tab'].includes(e.key)) {
+                    // Most people instinctively reach for arrow keys here; any
+                    // unrecognized key repeats the instructions immediately.
+                    const msg = window.buildSetupChoiceMessage('');
+                    window.announce(msg);
+                    window.startSetupChoiceReminder(msg);
                 }
                 return;
             } else if (state.inputMode === 'setup_bot_choice') {
@@ -368,7 +437,7 @@
                 } else if (e.key === 'Enter') {
                     const bot = window.BOT_LIBRARY[state.botIndex];
                     state.players.push({ id: state.setupIndex + 1, name: bot.name, isBot: true, abbr: bot.abbr, isBrainMode: state.setupBotBrainMode, categories: getDefaultCategories() });
-                    
+
                     const introKey = `audio/intro_1${bot.abbr}.mp3`;
                     window.playBotAudio(introKey, `${bot.name} added.`, () => {
                         if (state.players.length === 6) {
@@ -378,13 +447,23 @@
                         } else {
                             state.inputMode = 'setup_choice';
                             window.playGameSound('select');
-                            window.announce(`Press Enter to add another human player, B to add another Bot, or press S to start the game.`);
+                            const msg = window.buildSetupChoiceMessage('');
+                            window.announce(msg);
+                            window.startSetupChoiceReminder(msg);
                         }
                     });
                 } else if (e.key === 'Escape') {
-                    state.inputMode = state.players.length === 0 ? 'setup' : 'setup_choice';
-                    window.playGameSound('cancel');
-                    window.announce("Cancelled bot selection.");
+                    if (state.players.length === 0) {
+                        state.inputMode = 'setup';
+                        window.playGameSound('cancel');
+                        window.announce("Cancelled bot selection. Player 1, choose name.");
+                    } else {
+                        state.inputMode = 'setup_choice';
+                        window.playGameSound('cancel');
+                        const msg = window.buildSetupChoiceMessage('Cancelled bot selection. ');
+                        window.announce(msg);
+                        window.startSetupChoiceReminder(msg);
+                    }
                 }
                 return;
             } else if (state.inputMode === 'setup_dice_choice') {
@@ -393,14 +472,25 @@
                     state.gameMode = e.key.toLowerCase() === 'd' ? 'digital' : 'manual';
                     state.inputMode = 'nav';
                     state.setupIndex = 0;
+                    window.clearSetupChoiceReminder();
                     window.playGameSound('gameStart');
                     window.saveState();
                     window.renderScorecard();
-                    window.announce(`Game started. ${state.gameMode} dice mode.${window.getTurnAnnouncement(0)}`);
+                    let openingExtra = " Use question mark to access shortcuts and help.";
+                    if (state.gameMode === 'digital') {
+                        openingExtra = " Use the left hand, lower row characters to select dice to toggle between hold and roll before the next roll." + openingExtra;
+                    }
+                    window.announce(`Game started. ${state.gameMode} dice mode.${window.getTurnAnnouncement(0)}${openingExtra}`);
                     if (state.players[state.currentPlayerIndex].isBot) {
                         const botDelay = state.speechRate === 'fast' ? 7500 : (state.speechRate === 'medium' ? 10000 : 12500);
                         setTimeout(window.handleAITurn, botDelay);
                     }
+                } else if (e.key === 'Escape' && state.players.length < 6) {
+                    state.inputMode = 'setup_choice';
+                    window.playGameSound('cancel');
+                    const msg = window.buildSetupChoiceMessage('Back to player options. ');
+                    window.announce(msg);
+                    window.startSetupChoiceReminder(msg);
                 }
                 return;
             }
