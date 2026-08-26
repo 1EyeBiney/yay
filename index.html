@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-        <title>YAY! Accessible Dice v3.10.0</title>
+        <title>YAY! Accessible Dice v3.12.0</title>
     <style>
         /* CSS for high contrast dark mode */
         body {
@@ -109,6 +109,69 @@
             transform: translateY(20px);
             opacity: 0.7;
         }
+
+        /* Help overlay. Purely visual (aria-hidden); all speech goes through
+           #aria-announce so the screen reader hears one entry at a time. */
+        #help-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 900px;
+            max-height: 85vh;
+            overflow-y: auto;
+            background-color: #121212;
+            border: 3px solid #ffffff;
+            padding: 24px 32px;
+            z-index: 100;
+        }
+
+        #help-overlay h2 {
+            font-size: 1.6rem;
+            margin: 0 0 16px 0;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #777;
+        }
+
+        #help-overlay .help-hint {
+            font-size: 1rem;
+            color: #bbbbbb;
+            margin: 0 0 20px 0;
+        }
+
+        .help-heading {
+            font-size: 1.2rem;
+            font-weight: bold;
+            background-color: #2a2a2a;
+            border-top: 2px solid #777;
+            padding: 10px 12px;
+            margin-top: 16px;
+        }
+
+        .help-item {
+            display: flex;
+            gap: 20px;
+            padding: 8px 12px;
+            font-size: 1.05rem;
+            border-bottom: 1px solid #333;
+        }
+
+        .help-item .help-keys {
+            flex: 0 0 34%;
+            font-weight: bold;
+            color: #7fd7ff;
+        }
+
+        .help-item .help-desc {
+            flex: 1;
+        }
+
+        /* Matches the board's current-row treatment for a consistent focus cue. */
+        .help-current {
+            background-color: #333333;
+            outline: 5px solid #00ff00;
+        }
     </style>
 </head>
 <body>
@@ -121,7 +184,7 @@
     <script src="audio.js"></script>
     <script src="core.js"></script>
     <script>
-        /* index.html logic - v3.11.0 */
+        /* index.html logic - v3.12.0 */
         window.announce = function(msg) {
             const el = document.getElementById('aria-announce');
             if (el) {
@@ -165,12 +228,263 @@
             return `${prefix}Press Enter to add another human player, press B to add a Bot, or press S to start the game with ${n} player${n === 1 ? '' : 's'}. When adding a Bot, pressing Spacebar toggles between Easy and Brain mode.`;
         };
 
+        // ---------------------------------------------------------------
+        // Help overlay
+        // ---------------------------------------------------------------
+        // `modes` marks which inputMode values a section is relevant to, so
+        // opening help lands the cursor on the section that matches what the
+        // player is currently doing.
+        window.HELP_SECTIONS = [
+            {
+                heading: "Player Setup",
+                modes: ['setup'],
+                items: [
+                    { keys: "Up and Down arrows", description: "Move through the list of player names." },
+                    { keys: "Shift plus Up or Down", description: "Jump five names at a time." },
+                    { keys: "Enter", description: "Confirm the highlighted name and add that player." },
+                    { keys: "B", description: "Add a Bot player instead of a human." },
+                    { keys: "Escape", description: "Go back one step. Removes the player you just added." }
+                ]
+            },
+            {
+                heading: "Adding More Players",
+                modes: ['setup_choice'],
+                items: [
+                    { keys: "Enter", description: "Add another human player." },
+                    { keys: "B", description: "Add a Bot player." },
+                    { keys: "S", description: "Start the game with the players you have." },
+                    { keys: "Escape", description: "Go back and remove the last player added." },
+                    { keys: "Any other key", description: "Repeat these instructions. They also repeat on their own every ten seconds." }
+                ]
+            },
+            {
+                heading: "Bot Selection",
+                modes: ['setup_bot_choice'],
+                items: [
+                    { keys: "Up and Down arrows", description: "Move through the list of available Bots." },
+                    { keys: "Spacebar", description: "Toggle this Bot between Easy mode and Brain mode. Brain mode is the expert opponent." },
+                    { keys: "Enter", description: "Confirm and add the highlighted Bot." },
+                    { keys: "Escape", description: "Cancel Bot selection and go back." }
+                ]
+            },
+            {
+                heading: "Dice Mode",
+                modes: ['setup_dice_choice'],
+                items: [
+                    { keys: "D", description: "Digital dice. The game rolls for you and scores automatically." },
+                    { keys: "M", description: "Manual dice. You roll physical dice and dial in your own scores." },
+                    { keys: "Escape", description: "Go back to the player options." }
+                ]
+            },
+            {
+                heading: "Navigation",
+                modes: ['nav'],
+                items: [
+                    { keys: "Up and Down arrows", description: "Move through the categories on the scorecard." },
+                    { keys: "Left and Right arrows", description: "Switch between players." },
+                    { keys: "Page Up and Page Down", description: "Jump to the subtotal and total rows." }
+                ]
+            },
+            {
+                heading: "Dice Controls",
+                modes: [],
+                items: [
+                    { keys: "D or Spacebar", description: "Roll the dice." },
+                    { keys: "Z, X, C, V, and B", description: "Hold or release dice one through five. These are the lower row letters under your left hand." },
+                    { keys: "I", description: "Inspect your current dice and how many rolls you have left." }
+                ]
+            },
+            {
+                heading: "Placing a Score with Digital Dice",
+                modes: ['placement'],
+                items: [
+                    { keys: "Up and Down arrows", description: "Move through your empty categories. Each one previews what it would score." },
+                    { keys: "Enter", description: "Lock in the score for the highlighted category." },
+                    { keys: "R or Spacebar", description: "Repeat the potential score for the highlighted category." },
+                    { keys: "I", description: "Hear your final dice again." },
+                    { keys: "Category letters and numbers", description: "Jump straight to an empty category." }
+                ]
+            },
+            {
+                heading: "Dialing a Score with Manual Dice",
+                modes: ['score'],
+                items: [
+                    { keys: "Enter", description: "Start scoring the category you are on." },
+                    { keys: "Up and Down arrows", description: "Dial the score up or down." },
+                    { keys: "Shift plus Up or Down", description: "Jump five steps at a time." },
+                    { keys: "Enter again", description: "Save the score you dialed in." },
+                    { keys: "Escape", description: "Cancel without saving." }
+                ]
+            },
+            {
+                heading: "Category Shortcuts",
+                modes: [],
+                items: [
+                    { keys: "1 through 6", description: "Jump to the upper section categories, Aces through Sixes." },
+                    { keys: "T", description: "Three of a Kind." },
+                    { keys: "F", description: "Four of a Kind." },
+                    { keys: "H", description: "Full House." },
+                    { keys: "S", description: "Small Straight." },
+                    { keys: "L", description: "Large Straight." },
+                    { keys: "Y", description: "YAY!, five of a kind." },
+                    { keys: "A", description: "Chance." },
+                    { keys: "B", description: "YAY! Bonus. Only available once you have scored a YAY!." }
+                ]
+            },
+            {
+                heading: "Game Tools",
+                modes: ['confirm_reset'],
+                items: [
+                    { keys: "G", description: "Hear a list of your remaining open categories." },
+                    { keys: "R", description: "Read the current player's grand total." },
+                    { keys: "U", description: "Undo your last saved score." },
+                    { keys: "O", description: "Hear the all time top score leaderboard." },
+                    { keys: "E", description: "Hear your recent game history." },
+                    { keys: "Q", description: "End the game and reset the board. High scores are saved. Press Y to confirm or N to cancel." }
+                ]
+            },
+            {
+                heading: "Settings and Help",
+                modes: [],
+                items: [
+                    { keys: "P", description: "Change the pacing of Bot speech between fast, medium, and slow." },
+                    { keys: "M", description: "Mute or unmute the Bot voice lines." },
+                    { keys: "Question mark", description: "Open this help list, or repeat the current entry while it is open." },
+                    { keys: "Escape", description: "Close this help list." },
+                    { keys: "F5", description: "Refresh the page in your browser." },
+                    { keys: "F6", description: "Move between browser panes." }
+                ]
+            }
+        ];
+
+        // Flattens sections into one list so Up/Down walks headings and items alike.
+        window.buildHelpEntries = function() {
+            const entries = [];
+            window.HELP_SECTIONS.forEach((section, sectionIndex) => {
+                entries.push({ type: 'heading', sectionIndex, text: section.heading });
+                section.items.forEach(item => {
+                    entries.push({ type: 'item', sectionIndex, keys: item.keys, description: item.description });
+                });
+            });
+            return entries;
+        };
+
+        window.HELP_ENTRIES = window.buildHelpEntries();
+
+        window.getHelpEntrySpeech = function(index) {
+            const entry = window.HELP_ENTRIES[index];
+            if (!entry) return "";
+            if (entry.type === 'heading') return `${entry.text}, heading.`;
+            return `${entry.keys}. ${entry.description}`;
+        };
+
+        window.renderHelpOverlay = function() {
+            const container = document.getElementById('game-container');
+            const existing = document.getElementById('help-overlay');
+            if (existing) existing.remove();
+
+            if (!window.YAHTZEE_STATE.helpOpen) return;
+
+            let html = `<div id="help-overlay" aria-hidden="true">`;
+            html += `<h2>Keyboard Help</h2>`;
+            html += `<p class="help-hint">Up and Down arrows browse. Left and Right jump between sections. Escape closes.</p>`;
+
+            window.HELP_ENTRIES.forEach((entry, i) => {
+                const isCurrent = i === window.YAHTZEE_STATE.helpIndex ? ' help-current' : '';
+                if (entry.type === 'heading') {
+                    html += `<div class="help-heading${isCurrent}" data-help-index="${i}">${entry.text}</div>`;
+                } else {
+                    html += `<div class="help-item${isCurrent}" data-help-index="${i}">`
+                         +  `<span class="help-keys">${entry.keys}</span>`
+                         +  `<span class="help-desc">${entry.description}</span>`
+                         +  `</div>`;
+                }
+            });
+            html += `</div>`;
+
+            container.insertAdjacentHTML('beforeend', html);
+
+            const currentEl = document.querySelector(`#help-overlay [data-help-index="${window.YAHTZEE_STATE.helpIndex}"]`);
+            if (currentEl) currentEl.scrollIntoView({ block: 'nearest' });
+        };
+
+        window.openHelp = function() {
+            const state = window.YAHTZEE_STATE;
+            state.helpOpen = true;
+
+            // Land on the section matching whatever the player is currently doing.
+            let startIndex = window.HELP_ENTRIES.findIndex(entry =>
+                entry.type === 'heading' &&
+                window.HELP_SECTIONS[entry.sectionIndex].modes.includes(state.inputMode)
+            );
+            if (startIndex === -1) {
+                startIndex = window.HELP_ENTRIES.findIndex(entry =>
+                    entry.type === 'heading' && window.HELP_SECTIONS[entry.sectionIndex].heading === 'Navigation'
+                );
+            }
+            state.helpIndex = startIndex === -1 ? 0 : startIndex;
+
+            window.playGameSound('select');
+            window.renderHelpOverlay();
+            window.announce(`Help. Use up and down arrows to browse, Escape to close. ${window.getHelpEntrySpeech(state.helpIndex)}`);
+        };
+
+        window.closeHelp = function() {
+            const state = window.YAHTZEE_STATE;
+            state.helpOpen = false;
+            const overlay = document.getElementById('help-overlay');
+            if (overlay) overlay.remove();
+            window.playGameSound('cancel');
+            window.announce("Help closed.");
+        };
+
+        window.moveHelpCursor = function(delta) {
+            const state = window.YAHTZEE_STATE;
+            const next = state.helpIndex + delta;
+            if (next < 0 || next >= window.HELP_ENTRIES.length) {
+                window.playGameSound('limit');
+                return;
+            }
+            state.helpIndex = next;
+            window.playGameSound('nav');
+            window.renderHelpOverlay();
+            window.announce(window.getHelpEntrySpeech(state.helpIndex));
+        };
+
+        window.jumpHelpSection = function(direction) {
+            const state = window.YAHTZEE_STATE;
+            const headingIndexes = window.HELP_ENTRIES
+                .map((entry, i) => entry.type === 'heading' ? i : -1)
+                .filter(i => i !== -1);
+
+            const target = direction > 0
+                ? headingIndexes.find(i => i > state.helpIndex)
+                : [...headingIndexes].reverse().find(i => i < state.helpIndex);
+
+            if (target === undefined) {
+                window.playGameSound('limit');
+                return;
+            }
+            state.helpIndex = target;
+            window.playGameSound('nav');
+            window.renderHelpOverlay();
+            window.announce(window.getHelpEntrySpeech(state.helpIndex));
+        };
+
+        window.setHelpCursor = function(index) {
+            const state = window.YAHTZEE_STATE;
+            state.helpIndex = index;
+            window.playGameSound('nav');
+            window.renderHelpOverlay();
+            window.announce(window.getHelpEntrySpeech(state.helpIndex));
+        };
+
         window.initGame = function() {
             window.playGameSound('startup');
             document.getElementById('initBtn').style.display = 'none';
             const container = document.getElementById('game-container');
             container.focus();           
-            window.announce("Welcome to YAY! Accessible Dice, version 3.11.0. YAY! Player Setup. Use arrow keys to choose the player name for the first human player. Use up and down arrows to move through the list and enter to select the name of player 1. The names you choose for human players do not affect game play.");
+            window.announce("Welcome to YAY! Accessible Dice, version 3.12.0. YAY! Player Setup. Use arrow keys to choose the player name for the first human player. Use up and down arrows to move through the list and enter to select the name of player 1. The names you choose for human players do not affect game play.");
             
             container.addEventListener('blur', () => {
                 // F6 (browser pane-cycling) intentionally sends focus outside the
@@ -201,7 +515,7 @@
                     if (!window.YAHTZEE_STATE.speechRate) window.YAHTZEE_STATE.speechRate = 'fast';
                     if (typeof window.YAHTZEE_STATE.aiVoiceMuted === 'undefined') window.YAHTZEE_STATE.aiVoiceMuted = false;
                     if (!window.YAHTZEE_STATE.audioBags) window.YAHTZEE_STATE.audioBags = {};
-                    window.announce("YAY! Accessible Dice version 3.11.0. Previous game restored. Press Up or Down arrows to navigate.");
+                    window.announce("YAY! Accessible Dice version 3.12.0. Previous game restored. Press Up or Down arrows to navigate.");
                 } catch (e) {                    
                     console.warn("Cleared incompatible save file:", e.message);
                     localStorage.removeItem('YAHTZEE_DATA'); // Clear the bad data
@@ -226,7 +540,7 @@
             const displayRate = state.speechRate.charAt(0).toUpperCase() + state.speechRate.slice(1);
             const voiceState = state.aiVoiceMuted ? 'Muted' : 'On';
             const controlsHtml = `<div id="controls-bar" style="text-align: right; margin-bottom: 10px; font-size: 1rem; color: #888;">
-                Speech Rate: ${displayRate} (P) | AI Voice: ${voiceState} (M)
+                Speech Rate: ${displayRate} (P) | AI Voice: ${voiceState} (M) | Press ? for Help
             </div>`;
             container.insertAdjacentHTML('beforeend', controlsHtml);
 
@@ -329,7 +643,40 @@
             if (e.key === 'F6') { window._allowFocusLeave = true; return; }
             initAudio();
             const state = window.YAHTZEE_STATE;
-            
+
+            // Help is handled before any mode dispatch. It uses its own flag rather
+            // than an inputMode so that bot turns running underneath (which mutate
+            // inputMode from setTimeout chains) are never clobbered, and so closing
+            // help needs no state restoration.
+            if (state.helpOpen) {
+                e.preventDefault();
+                if (e.key === 'Escape') {
+                    window.closeHelp();
+                } else if (e.key === 'ArrowDown') {
+                    window.moveHelpCursor(1);
+                } else if (e.key === 'ArrowUp') {
+                    window.moveHelpCursor(-1);
+                } else if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+                    window.jumpHelpSection(1);
+                } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                    window.jumpHelpSection(-1);
+                } else if (e.key === 'Home') {
+                    window.setHelpCursor(0);
+                } else if (e.key === 'End') {
+                    window.setHelpCursor(window.HELP_ENTRIES.length - 1);
+                } else if (e.key === '?') {
+                    window.announce(window.getHelpEntrySpeech(state.helpIndex));
+                }
+                // Everything else is swallowed so no key leaks through to the game.
+                return;
+            }
+
+            if (e.key === '?') {
+                e.preventDefault();
+                window.openHelp();
+                return;
+            }
+
             if (state.inputMode === 'setup') {
                 e.preventDefault();
                 if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -553,14 +900,6 @@
                         window.announce("Game is over. Review the board with arrows, or press Q to reset.");
                         return;
                     }
-                }
-
-                // Help Menu (?)
-                if (e.key === '?') {
-                    e.preventDefault();
-                    window.playGameSound('select');
-                    window.announce("Help Menu. Here are the keyboard controls for YAY! Accessible Dice. Navigation: Use the Up and Down arrows to move through the scorecard. Left and Right arrows switch between players. Page Up and Page Down jump directly to the total and subtotal rows. Scoring: Press Enter on an empty category to start scoring. Use the Up and Down arrows to dial in your score. Hold Shift with the arrows to jump 5 points at a time. Press Enter again to save. Press Escape to cancel. Dice Controls: Press D to roll the dice. To toggle holding or releasing a die, use the letters on the bottom row: Z for Die 1, X for Die 2, C for Die 3, V for Die 4, and B for Die 5. Press I to inspect your current dice and remaining rolls. Category Shortcuts: The numbers 1 through 6 put you directly on those upper section categories. Many of the lower section categories use first letter association: T for Three of a Kind. F for Four of a Kind. H for Full House. S for Small Straight. L for Large Straight. Y for YAY!. A for Chance. And B for Yahtzee Bonus. Game Tools: Press G to hear a list of your remaining open categories. Press R to read the current player's grand total. Press U to undo your last score. Press O for the top score leaderboard. Press E for your recent game history. And press Q to end the game and reset the board. High all-time scores will be saved.");
-                    return;
                 }
 
                 // Pacing Toggle (P)

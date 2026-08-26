@@ -60,6 +60,13 @@ These come from `gemini.md` (the full master directive — read it before big ch
   0 = leaderboard, Q = reset (Y/N confirm), P = speech rate, ? = help.
 - Dev shortcuts (Ctrl+Shift+…): 1 = max upper, 2 = max lower, 3 = end-game simulator,
   9 = wipe localStorage + reload, 0 = inject fake 500 high score.
+- **Help overlay** (`?`): handled at the very top of the keydown listener, before any mode
+  dispatch, via a separate `state.helpOpen` flag — deliberately *not* an `inputMode`, because
+  bot turns mutate `inputMode` from async `setTimeout` chains and would clobber it. Content
+  lives in `window.HELP_SECTIONS`, flattened by `buildHelpEntries()` into `HELP_ENTRIES`
+  (headings are stops in the arrow flow). Each section's `modes` array drives which section
+  the cursor lands on when help opens. **When you add or change a keybinding, update
+  `HELP_SECTIONS`** — it is the single source of truth for the shortcut list.
 - Persistence: full `YAHTZEE_STATE` (including shuffle-bag state) auto-saved to
   localStorage on every commit/reset; hydrated on load with legacy-save handling.
 
